@@ -139,6 +139,9 @@ class PathPlanner:
     def point_to_cell(self, point):
         # Convert a series of [x,y] points in the map to the indices for the corresponding cell in the occupancy map
         # point is a 2 by N matrix of points of interest
+
+        
+
         print(
             "TO DO: Implement a method to get the map cell the robot is currently occupying"
         )
