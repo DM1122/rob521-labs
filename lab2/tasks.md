@@ -3,8 +3,8 @@
 flowchart TB
     start((Start))
     task1[Task 1 David]
-    task2[Task 2]
-    task3[Task 3 David]
+    task2[Task 2 David]
+    task3[Task 3]
     task4[Task 4]
     task5[Task 5]
     task6[Task 6 David]

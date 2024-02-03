@@ -12,6 +12,7 @@ from scipy.linalg import block_diag
 from pathlib import Path
 import sys
 import json
+from scipy.integrate import odeint
 
 # Conditional import if in a poetry env
 print(sys.executable)
@@ -144,11 +145,47 @@ class PathPlanner:
         )
         return 0, 0
 
-    def trajectory_rollout(self, vel, rot_vel):
-        # Given your chosen velocities determine the trajectory of the robot for your given timestep
-        # The returned trajectory should be a series of points to check for collisions
-        print("TO DO: Implement a way to rollout the controls chosen")
-        return np.zeros((3, self.num_substeps))
+    @typechecked
+    def trajectory_rollout(self, vel: float, rot_vel: float) -> np.ndarray:
+        """
+        Compute the trajectory of a robot given linear and angular velocities.
+
+        This method calculates the future trajectory of the robot over a fixed time horizon based on the provided linear velocity `vel` and rotational velocity `rot_vel`. The trajectory is determined by solving a system of ordinary differential equations (ODEs) that describe the robot's motion. The initial position of the robot is assumed to be at the origin of its reference frame.
+
+        Args:
+            vel (float): The linear velocity of the robot in meters per second.
+            rot_vel (float): The rotational velocity of the robot in radians per second.
+
+        Returns:
+            np.ndarray: An N x 3 matrix representing the trajectory of the robot. Each row corresponds to a point in time, with the first column being the x-coordinate, the second column the y-coordinate, and the third column the angle of the robot with respect to its initial orientation.
+
+        Notes:
+        - The function assumes the robot starts from the origin (x=0, y=0) with an initial angle of 0 radians.
+        - The function uses a numerical method to solve the system of ODEs defining the robot's motion.
+        """
+
+        def system_dynamics(state, t, v, omega):
+            # Define the system of ODEs
+            x, y, theta = state
+            x_dot = v * np.cos(theta)
+            y_dot = v * np.sin(theta)
+            theta_dot = omega
+            return [x_dot, y_dot, theta_dot]
+
+        # Initial conditions
+        x_0 = 0
+        y_0 = 0
+        theta_0 = 0
+
+        t_proj = 10  # numer of seconds to project into the future
+        t = np.linspace(0, t_proj, 100)
+
+        # Solve ODE
+        solution = odeint(
+            func=system_dynamics, y0=[x_0, y_0, theta_0], t=t, args=(vel, rot_vel)
+        )
+
+        return solution
 
     @typechecked
     def point_to_cell(self, point: np.ndarray) -> np.ndarray:
