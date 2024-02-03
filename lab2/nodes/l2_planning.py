@@ -151,6 +151,7 @@ class PathPlanner:
         Compute the trajectory of a robot given linear and angular velocities.
 
         This method calculates the future trajectory of the robot over a fixed time horizon based on the provided linear velocity `vel` and rotational velocity `rot_vel`. The trajectory is determined by solving a system of ordinary differential equations (ODEs) that describe the robot's motion. The initial position of the robot is assumed to be at the origin of its reference frame.
+        Assumes the robot starts from the origin (x=0, y=0) with an initial angle of 0 radians.
 
         Args:
             vel (float): The linear velocity of the robot in meters per second.
@@ -158,10 +159,6 @@ class PathPlanner:
 
         Returns:
             np.ndarray: An N x 3 matrix representing the trajectory of the robot. Each row corresponds to a point in time, with the first column being the x-coordinate, the second column the y-coordinate, and the third column the angle of the robot with respect to its initial orientation.
-
-        Notes:
-        - The function assumes the robot starts from the origin (x=0, y=0) with an initial angle of 0 radians.
-        - The function uses a numerical method to solve the system of ODEs defining the robot's motion.
         """
 
         def system_dynamics(state, t, v, omega):
