@@ -39,3 +39,21 @@ def test_point_to_cell(test_input, expected_output):
     output = sut.point_to_cell(test_input)
 
     assert np.array_equal(output, expected_output)
+
+
+# incomplete test parameters
+@pytest.mark.parametrize(
+    "test_input, expected_output",
+    [(np.array([[5, 6]]), np.array([[0, 0]]))],
+)
+def test_points_to_robot_circle(test_input, expected_output):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.points_to_robot_circle(test_input)
+    print(output)
+    # assert np.array_equal(output, expected_output)

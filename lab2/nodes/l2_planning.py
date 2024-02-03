@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Standard Libraries
+from matplotlib.font_manager import json_dump
 import numpy as np
 from typeguard import typechecked
 import yaml
@@ -10,6 +11,7 @@ from skimage.draw import disk
 from scipy.linalg import block_diag
 from pathlib import Path
 import sys
+import json
 
 # Conditional import if in a poetry env
 print(sys.executable)
@@ -175,11 +177,55 @@ class PathPlanner:
 
         return np.floor(point * self.map_settings_dict["resolution"] ** -1).astype(int)
 
-    def points_to_robot_circle(self, points):
-        # Convert a series of [x,y] points to robot map footprints for collision detection
-        # Hint: The disk function is included to help you with this function
-        print("TO DO: Implement a method to get the pixel locations of the robot path")
-        return [], []
+    @typechecked
+    def points_to_robot_circle(self, points: np.ndarray) -> list[np.ndarray]:
+        """
+        Converts a series of [x, y] coordinates to robot map footprints for collision detection.
+
+        This function calculates the pixel locations of a robot's path and converts them into
+        footprints based on the robot's radius. These footprints are used for collision detection.
+
+        Args:
+            points (np.ndarray): A 2-dimensional numpy array of shape Nx2, where each row
+                represents an [x, y] coordinate.
+
+        Returns:
+            list[np.ndarray]: A list of numpy arrays. Each array in the list is an Nx2 array
+                representing the coordinates of a circle footprint around each point.
+
+        Note:
+            The size of the circle footprint is determined by the robot's radius and the map settings.
+        """
+
+        if points.ndim != 2:
+            raise ValueError(
+                f"Input array must be 2-dimensional, received {points.ndim}"
+            )
+
+        if points.shape[1] != 2:
+            raise ValueError(
+                f"Input array must have a shape of Nx2, received: {points.shape}"
+            )
+
+        robot_radius_in_cells = (
+            self.map_settings_dict["resolution"] ** -1 * self.robot_radius
+        )
+
+        circles = []
+        for i in range(points.shape[0]):
+            point = points[i : i + 1]
+            cell_coords = self.point_to_cell(point)[0]
+            x_coords, y_coords = disk(
+                center=cell_coords,
+                radius=robot_radius_in_cells,
+                shape=self.map_shape,
+            )
+            circle_coords = np.vstack(
+                (x_coords, y_coords)
+            ).T  # Stacking and transposing
+            circles.append(circle_coords)
+
+        return circles
 
     # Note: If you have correctly completed all previous functions, then you should be able to create a working RRT function
 
