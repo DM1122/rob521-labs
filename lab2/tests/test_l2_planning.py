@@ -85,3 +85,17 @@ def test_trajectory_rollout():
     plt.legend()
     plt.grid()
     plt.show()
+
+
+@pytest.mark.parametrize(
+    "vector_1, vector_2, expected_output",
+    [
+        (np.array([1, 1]), np.array([1, 0]), np.pi / 4),  # 45 degrees in radians
+        (np.array([1, -1]), np.array([1, 0]), -np.pi / 4),  # 90 degrees in radians
+        (np.array([-1, 1]), np.array([1, 1]), np.pi / 2),  # 90 degrees in radians
+        (np.array([-2, 0]), np.array([0, 1]), np.pi),  # 180 degrees in radians
+    ],
+)
+def test_calculate_angle_between_vectors(vector_1, vector_2, expected_output):
+    output = PathPlanner.calculate_angle_between_vectors(vector_1, vector_2)
+    assert np.isclose(output, expected_output)

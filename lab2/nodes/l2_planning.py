@@ -2,6 +2,7 @@
 # Standard Libraries
 from matplotlib.font_manager import json_dump
 import numpy as np
+import scipy
 from typeguard import typechecked
 import yaml
 import pygame
@@ -137,12 +138,50 @@ class PathPlanner:
         robot_traj = self.trajectory_rollout(vel, rot_vel)
         return robot_traj
 
+    @staticmethod
+    @typechecked
+    def calculate_angle_between_vectors(v_1: np.ndarray, v_2: np.ndarray) -> float:
+        """Calculates the angle betweent two vectors
+
+        Answer is returned in radians.
+        """
+        dot_product = np.dot(v_1, v_2)
+
+        magnitude_v_1 = np.linalg.norm(v_1)
+        magnitude_v_2 = np.linalg.norm(v_2)
+
+        cos_theta = dot_product / (magnitude_v_1 * magnitude_v_2)
+
+        theta = np.arccos(cos_theta)
+
+        # Check the sign
+        theta = theta if theta <= np.pi else theta
+        return theta
+
+    def piecewise_linear_angle_function(angle):
+        """
+        A piecewise function that describes the relationship between the angle (in degrees)
+        between two vectors and a float value between -1 and 1 with a discontinuity at 180 degrees.
+        """
+        # Normalize the angle to be within [0, 360)
+        angle = angle % 360
+
+        if angle < 180:
+            # Linearly increase from 0 to 1 as the angle goes from 0 to 180
+            return angle / 180
+        elif angle == 180:
+            # Discontinuity at 180 degrees
+            return (
+                np.nan
+            )  # or return None if the jump should be represented as an undefined value
+        else:
+            # Linearly increase from -1 to 0 as the angle goes from 180 to 360
+            return -1 + (angle - 180) / 180
+
     def robot_controller(self, node_i, point_s):
         # This controller determines the velocities that will nominally move the robot from node i to node s
         # Max velocities should be enforced
-        print(
-            "TO DO: Implement a control scheme to drive you towards the sampled point"
-        )
+
         return 0, 0
 
     @typechecked
