@@ -179,10 +179,35 @@ class PathPlanner:
             return -1 + (angle - 180) / 180
 
     def robot_controller(self, node_i, point_s):
-        # This controller determines the velocities that will nominally move the robot from node i to node s
-        # Max velocities should be enforced
+        """
+        This controller determines the velocities that will nominally move the robot from node i to node s
+        Adjust the linear and rotational velocities based on the distance and the angular difference between
+        the robot's current position (node_i) and the target point(point_s). 
+        Max velocities should be enforced.
+        """
 
-        return 0, 0
+        x_i, y_i, theta_i = node_i # robot current position 
+        x_s, y_s = point_s # target point 
+
+        # Calculate the distance from the robot to the target point
+        distance = np.sqrt((x_s - x_i)**2 + (y_s - y_i)**2)
+
+        # Calculate the angle to the target point considering the robot's current orientation
+        angle_to_target = np.arctan2(y_s - y_i, x_s - x_i) - theta_i
+
+        # Normalize the angle_to_target to the range [-pi, pi]
+        angle_to_target = (angle_to_target + np.pi) % (2 * np.pi) - np.pi
+
+        # Calculate proportional velocities
+        linear_vel = 1 * distance
+        rotational_vel = 0.5 * angle_to_target
+
+        # Enforce maximum velocity limits
+        linear_vel = min(linear_vel, self.vel_max)
+        rotational_vel = min(rotational_vel, self.rot_vel_max)
+
+        return linear_vel, rotational_vel
+
 
     @typechecked
     def trajectory_rollout(self, vel: float, rot_vel: float) -> np.ndarray:
@@ -383,6 +408,7 @@ class PathPlanner:
             # Check for early end
             print("TO DO: Check for early end")
         return self.nodes
+    
 
     def recover_path(self, node_id=-1):
         path = [self.nodes[node_id].point]
