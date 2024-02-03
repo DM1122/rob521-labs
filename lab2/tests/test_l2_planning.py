@@ -1,7 +1,41 @@
-from nodes import l2_planning
+from nodes.l2_planning import PathPlanner
+import numpy as np
+import pytest
+from pathlib import Path
 
 
-def test_point_to_cell():
-    out = l2_planning.point_to_cell()
+@pytest.mark.parametrize(
+    "test_input, expected_output",
+    [
+        (np.array([[0, 0]]), np.array([[0, 0]])),
+        (np.array([[1, 1]]), np.array([[20, 20]])),
+        (np.array([[5.44, 3.81]]), np.array([[108, 76]])),
+        (
+            np.array(
+                [
+                    [11, 20],
+                    [16.8, 9.9],
+                    [31.776, 55],
+                ]
+            ),
+            np.array(
+                [
+                    [220, 400],
+                    [336, 198],
+                    [635, 1100],
+                ]
+            ),
+        ),
+    ],
+)
+def test_point_to_cell(test_input, expected_output):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
 
-    print("hi!")
+    output = sut.point_to_cell(test_input)
+
+    assert np.array_equal(output, expected_output)

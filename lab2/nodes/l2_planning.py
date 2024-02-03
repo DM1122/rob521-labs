@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 # Standard Libraries
 import numpy as np
+from typeguard import typechecked
 import yaml
 import pygame
 import time
-import pygame_utils
 import matplotlib.image as mpimg
 from skimage.draw import disk
 from scipy.linalg import block_diag
+from pathlib import Path
+import sys
+
+# Conditional import if in a poetry env
+print(sys.executable)
+if ".venv" in sys.executable:
+    from nodes import pygame_utils_custom
+else:
+    import pygame_utils_custom
 
 
-def load_map(filename):
-    im = mpimg.imread("../maps/" + filename)
+def load_map(file_path: Path):
+    im = mpimg.imread(file_path)
     if len(im.shape) > 2:
         im = im[:, :, 0]
     im_np = np.array(im)  # Whitespace is true, black is false
@@ -19,8 +28,8 @@ def load_map(filename):
     return im_np
 
 
-def load_map_yaml(filename):
-    with open("../maps/" + filename, "r") as stream:
+def load_map_yaml(file_path: Path):
+    with open(file_path, "r") as stream:
         map_settings_dict = yaml.safe_load(stream)
     return map_settings_dict
 
@@ -38,11 +47,13 @@ class Node:
 # Path Planner
 class PathPlanner:
     # A path planner capable of perfomring RRT and RRT*
-    def __init__(self, map_filename, map_setings_filename, goal_point, stopping_dist):
+    def __init__(
+        self, map_file_path: Path, map_settings_path: Path, goal_point, stopping_dist
+    ):
         # Get map information
-        self.occupancy_map = load_map(map_filename)
+        self.occupancy_map = load_map(map_file_path)
         self.map_shape = self.occupancy_map.shape
-        self.map_settings_dict = load_map_yaml(map_setings_filename)
+        self.map_settings_dict = load_map_yaml(map_settings_path)
 
         # Get the metric bounds of the map
         self.bounds = np.zeros([2, 2])  # m
@@ -85,10 +96,11 @@ class PathPlanner:
         self.epsilon = 2.5
 
         # Pygame window for visualization
-        self.window = pygame_utils.PygameWindow(
+        self.window = pygame_utils_custom.PygameWindow(
             "Path Planner",
             (1000, 1000),
             self.occupancy_map.shape,
+            map_file_path,
             self.map_settings_dict,
             self.goal_point,
             self.stopping_dist,
@@ -136,16 +148,32 @@ class PathPlanner:
         print("TO DO: Implement a way to rollout the controls chosen")
         return np.zeros((3, self.num_substeps))
 
-    def point_to_cell(self, point):
-        # Convert a series of [x,y] points in the map to the indices for the corresponding cell in the occupancy map
-        # point is a 2 by N matrix of points of interest
+    @typechecked
+    def point_to_cell(self, point: np.ndarray) -> np.ndarray:
+        """Converts a series of [x,y] points in the map to occupancy map cell indices.
 
-        
+        This function computes the cell indices in the occupancy map for each provided [x, y] point.
+        The points are assumed to be expressed in the map's bottom left corner reference frame.
 
-        print(
-            "TO DO: Implement a method to get the map cell the robot is currently occupying"
-        )
-        return 0
+        Args:
+            point (np.ndarray): An N by 2 matrix of points of interest, where N is the number of points.
+
+        Returns:
+            np.ndarray: An array of cell indices in the occupancy map corresponding to each input point.
+                        The output is an N by 2 matrix, where the first column contains x indices and the
+                        second column contains y indices.
+        """
+        if point.ndim != 2:
+            raise ValueError(
+                f"Input array must be 2-dimensional, received {point.ndim}"
+            )
+
+        if point.shape[1] != 2:
+            raise ValueError(
+                f"Input array must have a shape of Nx2, received: {point.shape}"
+            )
+
+        return np.floor(point * self.map_settings_dict["resolution"] ** -1).astype(int)
 
     def points_to_robot_circle(self, points):
         # Convert a series of [x,y] points to robot map footprints for collision detection
@@ -249,8 +277,8 @@ class PathPlanner:
 
 def main():
     # Set map information
-    map_filename = "willowgarageworld_05res.png"
-    map_setings_filename = "willowgarageworld_05res.yaml"
+    map_file_path = Path("../maps/willowgarageworld_05res.png")
+    map_settings_path = Path("../maps/willowgarageworld_05res.yaml")
 
     # robot information
     goal_point = np.array([[10], [10]])  # m
@@ -258,7 +286,7 @@ def main():
 
     # RRT precursor
     path_planner = PathPlanner(
-        map_filename, map_setings_filename, goal_point, stopping_dist
+        map_file_path, map_settings_path, goal_point, stopping_dist
     )
     nodes = path_planner.rrt_star_planning()
     node_path_metric = np.hstack(path_planner.recover_path())
