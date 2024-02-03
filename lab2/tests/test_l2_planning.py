@@ -99,3 +99,50 @@ def test_trajectory_rollout():
 def test_calculate_angle_between_vectors(vector_1, vector_2, expected_output):
     output = PathPlanner.calculate_angle_between_vectors(vector_1, vector_2)
     assert np.isclose(output, expected_output)
+
+
+def test_robot_controller_max_vel(
+    initial_point=np.array([0, 0, 0]),
+    final_point=np.array(
+        [
+            10000,
+            0,
+        ]
+    ),
+):
+    """Test to ensure the robot is commanded to its highest velocity and no rotation
+    when the target point is far but straight ahead"""
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    vel, rot_vel = sut.robot_controller(initial_point, final_point)
+
+    assert vel == sut.vel_max
+    assert rot_vel == 0
+
+
+def test_robot_controller_max_rot(
+    initial_point=np.array([0, 0, 0]),
+    final_point=np.array(
+        [
+            -1,
+            0,
+        ]
+    ),
+):
+    """Test to ensure the robot is commanded to its highest angular velocity when the target
+    point is at 180 degrees from it"""
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    vel, rot_vel = sut.robot_controller(initial_point, final_point)
+
+    assert rot_vel == sut.rot_vel_max
