@@ -25,3 +25,15 @@ flowchart TB
     task5 --> task6
     task6 --> task7 --> endd
 ```
+
+# Hyperparameter 
+
+./l2_planning.py $\\$
+rrt_planing -> n_iteration 
+
+# Discuss 
+
+test_points_to_robot_cicle 
+point.shape = (2,1) ? (2, )? 
+
+I implemented as (2,1) 

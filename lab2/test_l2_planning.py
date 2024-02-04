@@ -42,8 +42,19 @@ def test_point_to_cell(test_input, expected_output):
 
     assert np.array_equal(output, expected_output)
 
-
-def test_points_to_robot_circle():
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        np.array(
+                [
+                    [11, 20],
+                    [16.8, 9.9],
+                    [31.776, 55],
+                ]
+            ),
+    ],
+)
+def test_points_to_robot_circle(test_input):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -52,7 +63,7 @@ def test_points_to_robot_circle():
     )
 
     output = sut.points_to_robot_circle(test_input)
-    print(output)
+    print(output[0].shape)
 
 
 def test_trajectory_rollout():
@@ -68,7 +79,7 @@ def test_trajectory_rollout():
     rot_vel = 0.1  # angular velocity (rad/s)
 
     output = sut.trajectory_rollout(vel, rot_vel)
-
+    print(output.shape)
     # Plot results
     plt.figure()
     plt.plot(output[:, 0], output[:, 1], "b-", label="Trajectory")

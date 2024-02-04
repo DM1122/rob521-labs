@@ -80,7 +80,7 @@ class PathPlanner:
 
         # Goal Parameters
         self.goal_point = goal_point  # m
-        self.stopping_dist = stopping_dist  # m
+        self.stopping_dist = stopping_dist  # m # the minimum distance btw the goal point and the final position where the robot should come to stop 
 
         # Trajectory Simulation Parameters
         self.timestep = 1.0  # s
@@ -296,7 +296,7 @@ class PathPlanner:
             func=system_dynamics, y0=[x_0, y_0, theta_0], t=t, args=(vel, rot_vel)
         )
 
-        return solution
+        return solution # (100, 3)
 
     @typechecked
     def point_to_cell(self, point: np.ndarray) -> np.ndarray:
@@ -429,10 +429,21 @@ class PathPlanner:
 
     # Planner Functions
     def rrt_planning(self):
-        # This function performs RRT on the given map and robot
+        """
+        RRT alogrithm on the given map and robot 
+        1) sample one random point 
+        2) find the closest point in the node list 
+        3) find trajectory to the closest point 
+        4) check for the collision (if the trajectory collides with an obstacle)
+            - if path to NEW_STATE is collision free 
+                - Add end point 
+                - Add path from nearest node to end point 
+        5) retrun success/failure and current tree 
+        """
+        n_iteration = 1
         # You do not need to demonstrate this function to the TAs, but it is left in for you to check your work
         for i in range(
-            1
+            n_iteration
         ):  # Most likely need more iterations than this to complete the map!
             # Sample map space
             point = self.sample_map_space()
@@ -443,11 +454,15 @@ class PathPlanner:
             # Simulate driving the robot towards the closest point
             trajectory_o = self.simulate_trajectory(
                 self.nodes[closest_node_id].point, point
-            )
+            ) #(100,3)
 
             # Check for collisions
             print("TO DO: Check for collisions and add safe points to list of nodes.")
+            robot_footprint = self.points_to_robot_circle(trajectory_o[:, 0:2]) # cells points of the robot (100, 2)
+            # where is the obstacles ??? 
 
+            
+            
             # Check if goal has been reached
             print("TO DO: Check if at goal point.")
         return self.nodes
