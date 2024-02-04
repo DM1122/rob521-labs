@@ -22,6 +22,7 @@ ROT_GOAL_TOL = .3  # rad, tolerance to consider a goal complete
 TRANS_VEL_OPTS = [0, 0.025, 0.13, 0.26]  # m/s, max of real robot is .26
 ROT_VEL_OPTS = np.linspace(-1.82, 1.82, 11)  # rad/s, max of real robot is 1.82
 CONTROL_RATE = 5  # Hz, how frequently control signals are sent
+# how far into the future the motion planning algorithm looks 
 CONTROL_HORIZON = 5  # seconds. if this is set too high and INTEGRATION_DT is too low, code will take a long time to run!
 INTEGRATION_DT = .025  # s, delta t to propagate trajectories forward by
 COLLISION_RADIUS = 0.225  # m, radius from base_link to use for collisions, min of 0.2077 based on dimensions of .281 x .306
@@ -126,44 +127,75 @@ class PathFollower():
             self.check_and_update_goal()
 
             # start trajectory rollout algorithm
-            local_paths = np.zeros([self.horizon_timesteps + 1, self.num_opts, 3])
+            local_paths = np.zeros([self.horizon_timesteps + 1, self.num_opts, 3]) # (# of time steps needed to cover the CONTROLHORIZON, options of (v,w), each local path represented by 3 value )
             local_paths[0] = np.atleast_2d(self.pose_in_map_np).repeat(self.num_opts, axis=0)
 
-            print("TO DO: Propogate the trajectory forward, storing the resulting points in local_paths!")
+            """
+            Step 1) Trajectory rollout : Propogate the trajectory forward, storing the resulting points in local_paths
+                - perform trajectory rollout to generate potential local paths 
+                - reuse the trajectory rollout code from Task 2 (Check)
+            """
+           
             for t in range(1, self.horizon_timesteps + 1):
                 # propogate trajectory forward, assuming perfect control of velocity and no dynamic effects
-                pass
-
+                for opt_idx, (trans_vel, rot_vel) in enumerate(self.all_opts_scaled):
+                    x, y, theta = local_paths[t-1, opt_idx]
+                    theta += rot_vel 
+                    x += trans_vel * np.cos(theta)
+                    y += trans_vel * np.sin(theta) 
+                    local_paths[t, opt_idx] = [x, y, theta]
+            """
+            Step 2) Collision Check 
+             - Check the points in local_path_pixels for collisions
+             - Check for collsions and remove invalid trajectories 
+             - Reuse the collision detection code from Task 1 to perform collision detection on your trajectory 
+            """
             # check all trajectory points for collisions
             # first find the closest collision point in the map to each local path point
             local_paths_pixels = (self.map_origin[:2] + local_paths[:, :, :2]) / self.map_resolution
             valid_opts = range(self.num_opts)
-            local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50
+            local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50 ## ? 
 
-            print("TO DO: Check the points in local_path_pixels for collisions")
             for opt in range(local_paths_pixels.shape[1]):
                 for timestep in range(local_paths_pixels.shape[0]):
-                    pass
+                    pos = local_paths_pixels[timestep, opt_idx]
+                    collision_distance = self.map_np[int(pos[1]), int(pos[0])] # Assuming map_np is a 2D occupancy grid 
+                    # TO DO: remove trajectories that were deemed to have collisions 
+                    if collision_distance < self.collision_radius_pix:
+                        valid_opts = valid_opts[valid_opts != opt_idx]
+                        break # no need to check further if a collision is detected 
+            valid_local_paths = local_paths[:, valid_opts]
 
-            # remove trajectories that were deemed to have collisions
-            print("TO DO: Remove trajectories with collisions!")
-
+            """
+            Calculate final cost and choose best option 
+                - score each valid trajectory and pick the best one 
+            """
             # calculate final cost and choose best option
-            print("TO DO: Calculate the final cost and choose the best control option!")
             final_cost = np.zeros(self.num_opts)
+
+            for i, opt_idx in enumerate(valid_opts):
+                trajectory = valid_local_paths[:, opt_idx]
+                # score based on distance to the current goal 
+                goal_dist = np.linalg.nort(trajectory[-1, :2] - self.cur_goal[:2])
+                # score based on distance to nearst obstacle 
+                obs_dists = local_paths_lowest_collision_dist[opt_idx]
+                # combine the scores 
+                final_cost[i] = goal_dist + (OBS_DIST_MULT * obs_dists)
+
+
             if final_cost.size == 0:  # hardcoded recovery if all options have collision
                 control = [-.1, 0]
             else:
-                best_opt = valid_opts[final_cost.argmin()]
-                control = self.all_opts[best_opt]
-                self.local_path_pub.publish(utils.se2_pose_list_to_path(local_paths[:, best_opt], 'map'))
+                best_traj_idx = valid_opts[final_cost.argmin()]
+                best_control = self.all_opts[best_traj_idx] # pick the bast one 
+                self.local_path_pub.publish(utils.se2_pose_list_to_path(local_paths[:, best_traj_idx], 'map'))
 
             # send command to robot
-            self.cmd_pub.publish(utils.unicyle_vel_to_twist(control))
+            self.cmd_pub.publish(utils.unicyle_vel_to_twist(best_control))
 
             # uncomment out for debugging if necessary
-            # print("Selected control: {control}, Loop time: {time}, Max time: {max_time}".format(
-            #     control=control, time=(rospy.Time.now() - tic).to_sec(), max_time=1/CONTROL_RATE))
+            print("Selected control: {control}, Loop time: {time}, Max time: {max_time}".format(
+                control=control, time=(rospy.Time.now() - tic).to_sec(), max_time=1/CONTROL_RATE))
 
             self.rate.sleep()
 

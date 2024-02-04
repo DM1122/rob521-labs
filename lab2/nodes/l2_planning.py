@@ -17,10 +17,10 @@ from scipy.integrate import odeint
 
 # Conditional import if in a poetry env
 print(sys.executable)
-# if ".venv" in sys.executable:
-#     from nodes import pygame_utils_custom
-# else:
-#     import pygame_utils_custom
+if ".venv" in sys.executable:
+    from nodes import pygame_utils_custom
+else:
+    import pygame_utils_custom
 from nodes import pygame_utils_custom
 
 
