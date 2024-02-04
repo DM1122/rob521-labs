@@ -440,6 +440,56 @@ class PathPlanner:
                 - Add path from nearest node to end point 
         5) retrun success/failure and current tree 
         """
+
+        def check_collision(trajectory):
+            for state in trajectory:
+                cell = self.point_to_cell(state[:2]) # convert the point to cell coordinates 
+                
+                # check if the cell is within the bounds of the map 
+                if not (0 <= cell[0] < self.map_shape[1] and 0 <= cell[1] < self.map_shape[0]):
+                    return True # out of bound 
+                
+                footprint = self.points_to_robot_circle(state[:2].reshape(1, -1)) # robot's footprint in map coordinates 
+
+                # check each cell in the footprint for collision 
+                for point in footprint[0]:
+                    x, y = point
+                    # Make sure the point is within the map bounds
+                    if not (0 <= x < self.map_shape[1] and 0 <= y < self.map_shape[0]):
+                        continue  # Skip checking if outside the map
+                    
+                    # Check if the point is an obstacle
+                    if self.occupancy_map[y, x] == 0:  # on image, y-th "row", x-th column
+                        # Collision detected
+                        return True
+
+            # No collision detected in the entire trajectory
+            return False
+
+        def is_goal_reached(node_point):
+            """
+            Check if the goal has been reached within the stopping distance.
+
+            Args:
+            node_point (np.ndarray): The current node point as a numpy array [x, y, theta].
+
+            Returns:
+            bool: True if the goal is reached, False otherwise.
+            """
+            # Extract the x, y coordinates of the node point and the goal point
+            node_x, node_y = node_point[0], node_point[1]
+            goal_x, goal_y = self.goal_point[0], self.goal_point[1]
+
+            # Compute the Euclidean distance between the current node and the goal point
+            distance_to_goal = np.sqrt((goal_x - node_x) ** 2 + (goal_y - node_y) ** 2)
+
+            # Check if the distance is within the specified stopping distance
+            if distance_to_goal <= self.stopping_dist:
+                return True
+            else:
+                return False
+
+
         n_iteration = 1
         # You do not need to demonstrate this function to the TAs, but it is left in for you to check your work
         for i in range(
@@ -450,21 +500,27 @@ class PathPlanner:
 
             # Get the closest point
             closest_node_id = self.closest_node(point)
-
+            closest_node = self.nodes[closest_node_id]
             # Simulate driving the robot towards the closest point
             trajectory_o = self.simulate_trajectory(
-                self.nodes[closest_node_id].point, point
+                closest_node.point, point
             ) #(100,3)
 
             # Check for collisions
-            print("TO DO: Check for collisions and add safe points to list of nodes.")
-            robot_footprint = self.points_to_robot_circle(trajectory_o[:, 0:2]) # cells points of the robot (100, 2)
-            # where is the obstacles ??? 
+            # Check for collisions and add safe points to list of nodes.
 
-            
-            
-            # Check if goal has been reached
-            print("TO DO: Check if at goal point.")
+            if not check_collision(trajectory_o):
+                # If no collision, Add the new node 
+                new_node_point = trajectory_o[-1]  # The last point of the trajectory
+                new_node_cost = closest_node.cost + self.cost_to_come(trajectory_o) # update cost-to-come in rrt planning but does not use it to rewire the edge 
+                new_node = Node(new_node_point, closest_node_id, new_node_cost)
+                self.nodes.append(new_node)
+                new_node_id = len(self.nodes) - 1
+                closest_node.children_ids.append(new_node_id)
+
+                # Step 6: Check if goal is reached
+                if is_goal_reached(new_node_point):
+                    return self.nodes
         return self.nodes
 
     def rrt_star_planning(self):
