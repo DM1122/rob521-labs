@@ -362,10 +362,32 @@ class PathPlanner:
         print("TO DO: Implement a cost to come metric")
         return 0
 
-    def update_children(self, node_id):
-        # Given a node_id with a changed cost, update all connected nodes with the new cost
-        print("TO DO: Update the costs of connected nodes after rewiring.")
-        return
+    @typechecked
+    def update_children(self, node_id: int):
+        """
+        Recursively updates the cost of child nodes based on the cost of their parent node.
+
+        This method iterates over all children of a specified node, identified by `node_id`, and
+        recalculates their cost based on the cost of the parent node and the cost of the trajectory
+        between the parent and each child. This updated cost is then assigned to each child node. The
+        method is applied recursively to update the cost of all descendant nodes in the tree.
+
+        Args:
+            node_id (int): The identifier of the parent node whose children's costs are to be updated.
+        """
+        node = self.nodes[node_id]
+        parent_cost = node.cost
+
+        for child_id in node.children_ids:
+            child_node = self.nodes[child_id]
+
+            trajectory = self.connect_node_to_point(node.point, child_node.point)
+            trajectory_cost = self.cost_to_come(trajectory)
+
+            child_node.cost = parent_cost + trajectory_cost
+
+            # Recursively update the children of this child node
+            self.update_children(child_id)
 
     # Planner Functions
     def rrt_planning(self):
