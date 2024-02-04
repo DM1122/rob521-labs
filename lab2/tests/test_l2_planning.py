@@ -42,16 +42,17 @@ def test_point_to_cell(test_input, expected_output):
 
     assert np.array_equal(output, expected_output)
 
+
 @pytest.mark.parametrize(
     "test_input",
     [
         np.array(
-                [
-                    [11, 20],
-                    [16.8, 9.9],
-                    [31.776, 55],
-                ]
-            ),
+            [
+                [11, 20],
+                [16.8, 9.9],
+                [31.776, 55],
+            ]
+        ),
     ],
 )
 def test_points_to_robot_circle(test_input):
@@ -204,72 +205,69 @@ def test_robot_controller_max_rot_minus_90(
 
     assert np.isclose(rot_vel, -sut.rot_vel_max)
 
-@pytest.mark.parametrize(
-        "expected_output", np.array([[2,1]])
-)
 
+@pytest.mark.parametrize("expected_output", np.array([[2, 1]]))
 def test_sample_map_space(expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
-        )
+    )
 
     output = sut.sample_map_space()
 
     assert type(output) == np.ndarray
-    assert output.shape == (2,1)
-    assert output[0] <= sut.bounds[0,1] and output[0] >= sut.bounds[0,0]
-    assert output[1] <= sut.bounds[1,1] and output[1] >= sut.bounds[1,0]
+    assert output.shape == (2, 1)
+    assert output[0] <= sut.bounds[0, 1] and output[0] >= sut.bounds[0, 0]
+    assert output[1] <= sut.bounds[1, 1] and output[1] >= sut.bounds[1, 0]
+
 
 @pytest.mark.parametrize(
-        "input, expected_output", 
-        [
-            (np.array([[1],[2]]), True),
-            (np.array([[3],[26]]), False),
-        ]
+    "input, expected_output",
+    [
+        (np.array([[1], [2]]), True),
+        (np.array([[3], [26]]), False),
+    ],
 )
 def test_check_if_duplicate(input, expected_output):
-
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
-        )
+    )
 
-    sut.nodes.append(Node(np.array([[1],[2], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[3],[25], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[24],[30], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[9],[-2], [0]]), -1, 0))
-   
-    output =  sut.check_if_duplicate(input)
+    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
+
+    output = sut.check_if_duplicate(input)
     assert output == expected_output
 
-@pytest.mark.parametrize(
-        "input, expected_output", 
-        [
-            (np.array([[1],[2.1]]), 1),
-            (np.array([[3],[25.5]]), 2),
-            (np.array([[9], [-1.9]]), 4)
-        ]
-)
 
+@pytest.mark.parametrize(
+    "input, expected_output",
+    [
+        (np.array([[1], [2.1]]), 1),
+        (np.array([[3], [25.5]]), 2),
+        (np.array([[9], [-1.9]]), 4),
+    ],
+)
 def test_closest_node(input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
-        )
+    )
     # INIT: self.nodes = [Node(np.zeros((3,1)), -1, 0)]
-    sut.nodes.append(Node(np.array([[1],[2], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[3],[25], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[24],[30], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[9],[-2], [0]]), -1, 0))
-    
+    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
+
     # print(sut.nodes[0].point[1][0])
     output = sut.closest_node(input)
     assert output == expected_output
-

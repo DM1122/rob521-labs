@@ -386,19 +386,54 @@ class PathPlanner:
         )
 
     def connect_node_to_point(self, node_i, point_f):
+        """
+        Generates a trajectory from the point in node_i to point_f in a 3xN array, where N
+        represents the # of substeps. Assumes that we are taking a straight-line path between
+        the two points and that the robot's orientation does not change while travelling from
+        node_i to point_f. Collision checking will be done after the execution of this function.
+        Args:
+            node_i (node): Origin node
+            point_f (point): Destination point
+
+        Returns:
+            path (np.array): A 3xN array representing the path from node_i to point_f
+        """
         # Given two nodes find the non-holonomic path that connects them
         # Settings
         # node is a 3 by 1 node
         # point is a 2 by 1 point
-        print(
-            "TO DO: Implement a way to connect two already existing nodes (for rewiring)."
-        )
-        return np.zeros((3, self.num_substeps))
+        path = np.zeros((3, self.num_substeps))
+        path[:, 0] = node_i.point.flatten()
+
+        # Calculate the step size for x and y
+        dx = (point_f[0] - node_i.point[0]) / self.num_substeps
+        dy = (point_f[1] - node_i.point[1]) / self.num_substeps
+
+        # Fill in the path
+        for i in range(1, self.num_substeps):
+            path[0, i] = path[0, i-1] + dx
+            path[1, i] = path[1, i-1] + dy
+            path[2, i] = node_i.point[2]  # Keep theta the same
+
+        return path
 
     def cost_to_come(self, trajectory_o):
+        """
+        Computes the total Euclidean distance travelled between all substeps in a given trajectory.
+        
+        Args:
+            trajectory_o (np.array): 3xN array of the path taken betweeen two points.
+            
+        Returns:
+            cost (float): Cost of traversing the given trajectory.
+        """
         # The cost to get to a node from lavalle
-        print("TO DO: Implement a cost to come metric")
-        return 0
+        cost = 0.0
+        for i in range(1, self.num_substeps):
+            dx = trajectory_o[0, i] - trajectory_o[0, i-1]
+            dy = trajectory_o[1, i] - trajectory_o[1, i-1]
+            cost += np.sqrt(dx**2 + dy**2)
+        return cost
 
     @typechecked
     def update_children(self, node_id: int):
