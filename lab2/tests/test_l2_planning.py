@@ -125,7 +125,7 @@ def test_robot_controller_max_vel(
     assert rot_vel == 0
 
 
-def test_robot_controller_max_rot(
+def test_robot_controller_max_rot_180(
     initial_point=np.array([0, 0, 0]),
     final_point=np.array(
         [
@@ -145,4 +145,50 @@ def test_robot_controller_max_rot(
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
 
-    assert rot_vel == sut.rot_vel_max
+    assert rot_vel == -sut.rot_vel_max
+
+
+def test_robot_controller_max_rot_90(
+    initial_point=np.array([0, 0, 0]),
+    final_point=np.array(
+        [
+            0,
+            1,
+        ]
+    ),
+):
+    """Test to ensure the robot is commanded to its highest angular velocity when the target
+    point is at 90 degrees from it"""
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    vel, rot_vel = sut.robot_controller(initial_point, final_point)
+
+    assert np.isclose(rot_vel, sut.rot_vel_max)
+
+
+def test_robot_controller_max_rot_minus_90(
+    initial_point=np.array([0, 0, 0]),
+    final_point=np.array(
+        [
+            0,
+            -1,
+        ]
+    ),
+):
+    """Test to ensure the robot is commanded to its highest angular velocity when the target
+    point is at -90 degrees from it"""
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    vel, rot_vel = sut.robot_controller(initial_point, final_point)
+
+    assert np.isclose(rot_vel, -sut.rot_vel_max)

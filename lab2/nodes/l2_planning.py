@@ -181,9 +181,9 @@ class PathPlanner:
     @typechecked
     def robot_controller(self, node_i, point_s) -> tuple[float, float]:
         """
-        This controller determines the velocities that will nominally move the robot from node i to node s
+        This controller determines the velocities that will nominally move the robot from node i to node s.
         Adjust the linear and rotational velocities based on the distance and the angular difference between
-        the robot's current position (node_i) and the target point(point_s).
+        the robot's current position (node_i) and the target point (point_s).
         Max velocities should be enforced.
         """
 
@@ -199,13 +199,25 @@ class PathPlanner:
         # Normalize the angle_to_target to the range [-pi, pi]
         angle_to_target = (angle_to_target + np.pi) % (2 * np.pi) - np.pi
 
-        # Calculate proportional velocities
+        # Scale the rotational velocity based on the angular difference
+        # Apply maximum angular velocity at ±90 to ±180 degrees
+        # Scale linearly to 0 as it approaches ±0 degrees
+        if np.abs(angle_to_target) > np.pi / 2:
+            rotational_vel = self.rot_vel_max
+        else:
+            rotational_vel = (2 * self.rot_vel_max / np.pi) * np.abs(angle_to_target)
+
+        # Ensure rotational velocity is in the correct direction
+        rotational_vel *= np.sign(angle_to_target)
+
+        # Calculate proportional linear velocity
         linear_vel = 1 * distance
-        rotational_vel = 0.5 * angle_to_target
 
         # Enforce maximum velocity limits
         linear_vel = min(linear_vel, self.vel_max)
-        rotational_vel = min(rotational_vel, self.rot_vel_max)
+        rotational_vel = min(np.abs(rotational_vel), self.rot_vel_max) * np.sign(
+            rotational_vel
+        )
 
         return linear_vel, rotational_vel
 
