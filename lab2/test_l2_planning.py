@@ -228,10 +228,10 @@ def test_check_if_duplicate(input, expected_output):
         stopping_dist=0.5,
         )
 
-    sut.nodes.append(Node(np.array((1,2)), -1, 0))
-    sut.nodes.append(Node(np.array((3,25)), -1, 0))
-    sut.nodes.append(Node(np.array((4,30)), -1, 0))
-    sut.nodes.append(Node(np.array((5,-2)), -1, 0))
+    sut.nodes.append(Node(np.array([[1],[2], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[3],[25], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[24],[30], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[9],[-2], [0]]), -1, 0))
    
     output =  sut.check_if_duplicate(input)
     assert output == expected_output

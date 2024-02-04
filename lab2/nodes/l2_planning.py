@@ -142,7 +142,7 @@ class PathPlanner:
 
         # self.nodes = [Node(np.zeros((3, 1)), -1, 0)]
         for cur_node in self.nodes:
-            if cur_node.point[0] == point[0][0] and cur_node.point[1] == point[1][0]:
+            if cur_node.point[0][0] == point[0][0] and cur_node.point[1][0] == point[1][0]:
                 return True 
         return False
 
