@@ -17,10 +17,11 @@ from scipy.integrate import odeint
 
 # Conditional import if in a poetry env
 print(sys.executable)
-if ".venv" in sys.executable:
-    from nodes import pygame_utils_custom
-else:
-    import pygame_utils_custom
+# if ".venv" in sys.executable:
+#     from nodes import pygame_utils_custom
+# else:
+#     import pygame_utils_custom
+from nodes import pygame_utils_custom
 
 
 def load_map(file_path: Path):
@@ -112,21 +113,58 @@ class PathPlanner:
         return
 
     # Functions required for RRT
-    def sample_map_space(self):
-        # Return an [x,y] coordinate to drive the robot towards
-        print("TO DO: Sample point to drive towards")
-        return np.zeros((2, 1))
+    @typechecked
+    def sample_map_space(self) -> np.ndarray:
+        """
+        select and return the random point lies within the map boundary 
+        return an [x,y] coordinate to drive the robot towards 
 
-    def check_if_duplicate(self, point):
-        # Check if point is a duplicate of an already existing node
-        print("TO DO: Check that nodes are not duplicates")
+        return: (2, 1) shape point 
+        """
+        # self.map_shape, self.boundary 
+        # (b - a) * random_sample() + a
+        random_p = np.random.random_sample(2)
+        random_x = (self.bounds[0,1] - self.bounds[0,0]) * random_p[0] + self.bounds[0,0]
+        random_y = (self.bounds[1,1] - self.bounds[1,0]) * random_p[1] + self.bounds[1,0]
+        
+        return np.array([random_x, random_y]).reshape(2, 1)
+
+    def check_if_duplicate(self, point) -> bool:
+        """
+        Check if point is a duplicate of an already existing node in the list 
+        Class Node object are in self.nodes, and assumes that point is numpy array ((2,1))
+
+        # Assumed that the point is in shape of (2,1) 
+
+        Input: A point to check if it already exist in the node list 
+        Return: Boolean 
+        """
+
+        # self.nodes = [Node(np.zeros((3, 1)), -1, 0)]
+        for cur_node in self.nodes:
+            if cur_node.point[0] == point[0][0] and cur_node.point[1] == point[1][0]:
+                return True 
         return False
 
     def closest_node(self, point):
-        # Returns the index of the closest node
-        print("TO DO: Implement a method to get the closest node to a sapled point")
-        return 0
+        """
+        Implement a method to get the closest node to a sapled point. 
+        Assumed that the point in shape of (2,1)
 
+        Input: A current point needs to find the closest node 
+        Return: the index of the closest node 
+        """
+        min_distance = 100000000 
+        min_idx = -1 
+        if len(self.nodes) >= 1:
+            for idx, cur_node in enumerate(self.nodes):
+                cur_distance = np.sqrt((cur_node.point[0][0] - point[0][0]) ** 2 + (cur_node.point[1][0] - point[1][0]) **2 )
+                min_distance = min(cur_distance, min_distance)
+                if min_distance == cur_distance:
+                    min_idx = idx 
+            return min_idx 
+        assert len(self.nodes) != 0 
+ 
     def simulate_trajectory(self, node_i, point_s):
         # Simulates the non-holonomic motion of the robot.
         # This function drives the robot from node_i towards point_s. This function does has many solutions!

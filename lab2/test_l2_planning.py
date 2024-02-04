@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from nodes.l2_planning import PathPlanner
+from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
@@ -144,7 +145,6 @@ def test_robot_controller_max_rot_180(
     )
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
-
     assert rot_vel == -sut.rot_vel_max
 
 
@@ -192,3 +192,73 @@ def test_robot_controller_max_rot_minus_90(
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
 
     assert np.isclose(rot_vel, -sut.rot_vel_max)
+
+@pytest.mark.parametrize(
+        "expected_output", np.array([[2,1]])
+)
+
+def test_sample_map_space(expected_output):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+        )
+
+    output = sut.sample_map_space()
+
+    assert type(output) == np.ndarray
+    assert output.shape == (2,1)
+    assert output[0] <= sut.bounds[0,1] and output[0] >= sut.bounds[0,0]
+    assert output[1] <= sut.bounds[1,1] and output[1] >= sut.bounds[1,0]
+
+@pytest.mark.parametrize(
+        "input, expected_output", 
+        [
+            (np.array([[1],[2]]), True),
+            (np.array([[3],[26]]), False),
+        ]
+)
+def test_check_if_duplicate(input, expected_output):
+
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+        )
+
+    sut.nodes.append(Node(np.array((1,2)), -1, 0))
+    sut.nodes.append(Node(np.array((3,25)), -1, 0))
+    sut.nodes.append(Node(np.array((4,30)), -1, 0))
+    sut.nodes.append(Node(np.array((5,-2)), -1, 0))
+   
+    output =  sut.check_if_duplicate(input)
+    assert output == expected_output
+
+@pytest.mark.parametrize(
+        "input, expected_output", 
+        [
+            (np.array([[1],[2.1]]), 1),
+            (np.array([[3],[25.5]]), 2),
+            (np.array([[9], [-1.9]]), 4)
+        ]
+)
+
+def test_closest_node(input, expected_output):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+        )
+    # INIT: self.nodes = [Node(np.zeros((3,1)), -1, 0)]
+    sut.nodes.append(Node(np.array([[1],[2], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[3],[25], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[24],[30], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[9],[-2], [0]]), -1, 0))
+    
+    # print(sut.nodes[0].point[1][0])
+    output = sut.closest_node(input)
+    assert output == expected_output
+
