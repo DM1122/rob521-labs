@@ -167,14 +167,6 @@ class PathPlanner:
             return min_idx 
         assert len(self.nodes) != 0 
  
-<<<<<<< HEAD
-    def simulate_trajectory(self, node_i, point_s):
-        # Simulates the non-holonomic motion of the robot.
-        # This function drives the robot from node_i towards point_s. This function does has many solutions!
-        # node_i is a 3 by 1 vector [x;y;theta] this can be used to construct the SE(2) matrix T_{OI} in course notation
-        # point_s is the sampled point vector [x; y]
-        # print("TO DO: Implment a method to simulate a trajectory given a sampled point")
-=======
     @typechecked
     def simulate_trajectory(
         self, node_i: np.ndarray, point_s: np.ndarray
@@ -196,7 +188,6 @@ class PathPlanner:
         Returns:
             numpy.array: An array representing the simulated trajectory of the robot.
         """
->>>>>>> 155e52594e6ae507961adbe9bf49f1eaf14edc6c
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
@@ -422,7 +413,7 @@ class PathPlanner:
             point_f (point): Destination point
 
         Returns:
-            path (np.array): A 3xN array representing the path from node_i to point_f
+            path (np.array): A Nx3 array representing the path from node_i to point_f
         """
         # Given two nodes find the non-holonomic path that connects them
         # Settings
@@ -437,9 +428,9 @@ class PathPlanner:
 
         # Fill in the path
         for i in range(1, self.num_substeps):
-            path[0, i] = path[0, i-1] + dx
-            path[1, i] = path[1, i-1] + dy
-            path[2, i] = node_i.point[2]  # Keep theta the same
+            path[i, 0] = path[i-1, 0] + dx
+            path[i, 1] = path[i-1, 1] + dy
+            path[i, 2] = node_i.point[2]  # Keep theta the same
 
         return path
 
@@ -448,7 +439,7 @@ class PathPlanner:
         Computes the total Euclidean distance travelled between all substeps in a given trajectory.
         
         Args:
-            trajectory_o (np.array): 3xN array of the path taken betweeen two points.
+            trajectory_o (np.array): Nx3 array of the path taken betweeen two points.
             
         Returns:
             cost (float): Cost of traversing the given trajectory.
@@ -456,8 +447,8 @@ class PathPlanner:
         # The cost to get to a node from lavalle
         cost = 0.0
         for i in range(1, self.num_substeps):
-            dx = trajectory_o[0, i] - trajectory_o[0, i-1]
-            dy = trajectory_o[1, i] - trajectory_o[1, i-1]
+            dx = trajectory_o[i, 0] - trajectory_o[i-1, 0]
+            dy = trajectory_o[i, 1] - trajectory_o[i-1, 1]
             cost += np.sqrt(dx**2 + dy**2)
         return cost
 
