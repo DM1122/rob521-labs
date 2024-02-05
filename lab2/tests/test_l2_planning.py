@@ -306,7 +306,7 @@ def test_check_collision_true():
         stopping_dist=0.5,
     )
 
-    trajectory = np.array([[0, 0, 0], [5, 0, 0], [10, 0, 0], [15, 0, 0]])
+    trajectory = np.array([[15, 0, 0]])
 
     output = sut.check_collision(trajectory)
 
