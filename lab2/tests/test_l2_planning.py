@@ -20,25 +20,10 @@ def path_planner_instance():
 @pytest.mark.parametrize(
     "test_input, expected_output",
     [
-        (np.array([[0, 0]]), np.array([[0, 0]])),
-        (np.array([[1, 1]]), np.array([[20, 20]])),
-        (np.array([[5.44, 3.81]]), np.array([[108, 76]])),
         (
-            np.array(
-                [
-                    [11, 20],
-                    [16.8, 9.9],
-                    [31.776, 55],
-                ]
-            ),
-            np.array(
-                [
-                    [220, 400],
-                    [336, 198],
-                    [635, 1100],
-                ]
-            ),
-        ),
+            np.array([[-0.8, 0.8]]),
+            np.array([[599, 404]]),
+        ),  # should be around bottom left corner of first wall
     ],
 )
 def test_point_to_cell(test_input, expected_output):
@@ -296,7 +281,15 @@ def test_rrt_planning(path_planner_instance):
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
-def test_check_collision_true():
+# @pytest.mark.parametrize(
+#     "input, expected_output",
+#     [
+#         (np.array([[1], [2.1]]), 1),
+#         (np.array([[3], [25.5]]), 0),
+#         (np.array([[9], [-1.9]]), 0),
+#     ],
+# )
+def test_check_collision():
     """Test for trajectory collision checking. Result should be true (a collision
     is encountered)"""
     sut = PathPlanner(
@@ -313,3 +306,29 @@ def test_check_collision_true():
     while True:
         time.sleep(1)
     assert output == True
+
+
+def test_occ():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[-0.8], [0.8]]),
+        stopping_dist=0.5,
+    )
+
+    broad = 1
+    index = [598, 403]
+
+    output = sut.occupancy_map[index[0], index[1]]
+
+    print(sut.occupancy_map.shape)
+    print(
+        sut.occupancy_map[
+            index[0] - broad : index[0] + broad + 1,
+            index[1] - broad : index[1] + broad + 1,
+        ]
+    )
+
+    while True:
+        time.sleep(1)
+    assert output == 0

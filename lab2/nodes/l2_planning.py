@@ -300,9 +300,7 @@ class PathPlanner:
             point (np.ndarray): An N by 2 matrix of points of interest, where N is the number of points.
 
         Returns:
-            np.ndarray: An array of cell indices in the occupancy map corresponding to each input point.
-                        The output is an N by 2 matrix, where the first column contains x indices and the
-                        second column contains y indices.
+            np.ndarray: An array of cell indices [row,col] in the occupancy map corresponding to each input point.
         """
         if point.ndim != 2:
             raise ValueError(
@@ -315,15 +313,24 @@ class PathPlanner:
             )
 
         # Retrieve the origin from the map settings.
-        origin = self.map_settings_dict["origin"]  # origin: [x_offset, y_offset, ...]
+        origin = self.map_settings_dict["origin"]  # origin: [-21.0, -49.25, 0.000000]
 
         # Adjust the points by the origin offset
         adjusted_point = point - origin[:2]
 
         # Compute cell indices
-        cell = np.floor(
-            adjusted_point * self.map_settings_dict["resolution"] ** -1
-        ).astype(int)
+        cell = adjusted_point * self.map_settings_dict["resolution"] ** -1
+        cell = np.floor(cell)
+        cell = cell.astype(int)
+
+        cell[:, 1] = cell[:, 1] - self.map_shape[1]
+        cell[:, 1] *= -1
+
+        # flip x y for yx
+        x = cell[:, 1]
+        y = cell[:, 0]
+
+        cell = np.column_stack((x, y))
 
         return cell
 
