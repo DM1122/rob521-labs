@@ -5,6 +5,15 @@ import numpy as np
 import pytest
 from pathlib import Path
 
+@pytest.fixture 
+def path_planner_instance():
+    return PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
 
 @pytest.mark.parametrize(
     "test_input, expected_output",
@@ -65,6 +74,8 @@ def test_points_to_robot_circle(test_input):
 
     output = sut.points_to_robot_circle(test_input)
     print(output[0].shape)
+    print(output[1].shape)
+    print(output[2].shape)
 
 
 def test_trajectory_rollout():
@@ -205,6 +216,29 @@ def test_robot_controller_max_rot_minus_90(
 
     assert np.isclose(rot_vel, -sut.rot_vel_max)
 
+# def test_robot_controller_type_match(
+#     initial_point=np.array([0, 0, 0]),
+#     final_point=np.array(
+#         [
+#             10000,
+#             0,
+#         ]
+#     ),
+# ):
+#     """Test to ensure the robot is commanded to its highest velocity and no rotation
+#     when the target point is far but straight ahead"""
+#     sut = PathPlanner(
+#         map_file_path=Path("maps/willowgarageworld_05res.png"),
+#         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+#         goal_point=np.array([[10], [10]]),
+#         stopping_dist=0.5,
+#     )
+
+#     vel, rot_vel = sut.robot_controller(initial_point, final_point)
+
+#     assert vel == sut.vel_max
+#     assert rot_vel == 0
+
 
 @pytest.mark.parametrize("expected_output", np.array([[2, 1]]))
 def test_sample_map_space(expected_output):
@@ -271,3 +305,22 @@ def test_closest_node(input, expected_output):
     # print(sut.nodes[0].point[1][0])
     output = sut.closest_node(input)
     assert output == expected_output
+
+
+def test_rrt_planning(path_planner_instance):
+    sut = path_planner_instance
+    nodes = sut.rrt_planning()
+    # print(nodes[0].point.shape, nodes[1].shape)
+    # print(nodes[0].point, nodes[1])
+
+    # for state in nodes:
+    #     print(state[:2].shape)
+    #     print(state[:2].ndim)
+    #     break
+    # print(nodes.shape)
+    print(nodes)
+
+
+    # print(len(nodes))
+    # assert isinstance(nodes, list)  # Check if 'nodes' is a list
+    # assert len(nodes) > 0  # Check if 'nodes' has at least one element

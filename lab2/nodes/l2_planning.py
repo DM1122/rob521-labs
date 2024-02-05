@@ -477,29 +477,31 @@ class PathPlanner:
         """
 
         def check_collision(trajectory):
-            for state in trajectory:
-                cell = self.point_to_cell(state[:2]) # convert the point to cell coordinates 
-                
-                # check if the cell is within the bounds of the map 
-                if not (0 <= cell[0] < self.map_shape[1] and 0 <= cell[1] < self.map_shape[0]):
-                    return True # out of bound 
-                
-                footprint = self.points_to_robot_circle(state[:2].reshape(1, -1)) # robot's footprint in map coordinates 
+            cell = self.point_to_cell(trajectory[:, 0:2]) # convert the all the points to cell coordinates 
 
-                # check each cell in the footprint for collision 
-                for point in footprint[0]:
-                    x, y = point
+            for cur_cell in cell:
+                # check if the cell is within the bounds of the map 
+                if not (0 <= cur_cell[0] and cur_cell[0] < self.map_shape[1] and 0 <= cur_cell[1] and cur_cell[1] < self.map_shape[0]):
+                    return True # out of bound 
+            
+            # N * (61, 2) = N point, 61 points that make up a circle (61*2)
+            footprint = self.points_to_robot_circle(trajectory[:, 0:2]) # robot's footprint in map coordinates 
+            
+            # check each cell in the footprint for collsion 
+            for cell in footprint:
+                for point in cell:
+                    circle_x, circle_y = point
                     # Make sure the point is within the map bounds
-                    if not (0 <= x < self.map_shape[1] and 0 <= y < self.map_shape[0]):
+                    if not (0 <= circle_x and circle_x < self.map_shape[1] and 0 <= circle_y and circle_y < self.map_shape[0]):
                         continue  # Skip checking if outside the map
-                    
                     # Check if the point is an obstacle
-                    if self.occupancy_map[y, x] == 0:  # on image, y-th "row", x-th column
+                    # if 0, the robot cannn't go there there is an obstacle. 
+                    if self.occupancy_map[circle_y, circle_x] == 0:  # on image, y-th "row", x-th column
                         # Collision detected
                         return True
-
-            # No collision detected in the entire trajectory
-            return False
+            
+            return False # No collsion detected 
+          
 
         def is_goal_reached(node_point):
             """
@@ -525,38 +527,57 @@ class PathPlanner:
                 return False
 
 
-        n_iteration = 1
-        # You do not need to demonstrate this function to the TAs, but it is left in for you to check your work
-        for i in range(
-            n_iteration
-        ):  # Most likely need more iterations than this to complete the map!
-            # Sample map space
-            point = self.sample_map_space()
+        point = self.sample_map_space()
 
-            # Get the closest point
-            closest_node_id = self.closest_node(point)
-            closest_node = self.nodes[closest_node_id]
-            # Simulate driving the robot towards the closest point
-            trajectory_o = self.simulate_trajectory(
-                closest_node.point, point
-            ) #(100,3)
+        closest_node_id = self.closest_node(point)
+        closest_node = self.nodes[closest_node_id] # (3, 1)
+        
 
-            # Check for collisions
-            # Check for collisions and add safe points to list of nodes.
+        # Simulate driving the robot towards the closest point
+        trajectory_o = self.simulate_trajectory(
+            closest_node.point.reshape(3), point.reshape(2)
+        ) #(100,3)
 
-            if not check_collision(trajectory_o):
-                # If no collision, Add the new node 
-                new_node_point = trajectory_o[-1]  # The last point of the trajectory
-                new_node_cost = closest_node.cost + self.cost_to_come(trajectory_o) # update cost-to-come in rrt planning but does not use it to rewire the edge 
-                new_node = Node(new_node_point, closest_node_id, new_node_cost)
-                self.nodes.append(new_node)
-                new_node_id = len(self.nodes) - 1
-                closest_node.children_ids.append(new_node_id)
+        if check_collision(trajectory_o):
+            return True 
+        else:
+            return False 
+        # return closest_node, point 
+        # return trajectory_o
 
-                # Step 6: Check if goal is reached
-                if is_goal_reached(new_node_point):
-                    return self.nodes
-        return self.nodes
+
+        # n_iteration = 1
+        # # You do not need to demonstrate this function to the TAs, but it is left in for you to check your work
+        # for i in range(
+        #     n_iteration
+        # ):  # Most likely need more iterations than this to complete the map!
+        #     # Sample map space
+        #     point = self.sample_map_space()
+
+        #     # Get the closest point
+        #     closest_node_id = self.closest_node(point)
+        #     closest_node = self.nodes[closest_node_id]
+        #     # Simulate driving the robot towards the closest point
+        #     trajectory_o = self.simulate_trajectory(
+        #         closest_node.point.reshape(3), point.reshape(2)
+        #     ) #(100,3)
+
+        #     # Check for collisions
+        #     # Check for collisions and add safe points to list of nodes.
+
+        #     if not check_collision(trajectory_o):
+        #         # If no collision, Add the new node 
+        #         new_node_point = trajectory_o[-1]  # The last point of the trajectory
+        #         new_node_cost = closest_node.cost + self.cost_to_come(trajectory_o) # update cost-to-come in rrt planning but does not use it to rewire the edge 
+        #         new_node = Node(new_node_point, closest_node_id, new_node_cost)
+        #         self.nodes.append(new_node)
+        #         new_node_id = len(self.nodes) - 1
+        #         closest_node.children_ids.append(new_node_id)
+
+        #         # Step 6: Check if goal is reached
+        #         if is_goal_reached(new_node_point):
+        #             return self.nodes
+        # return self.nodes
 
     def rrt_star_planning(self):
         # This function performs RRT* for the given map and robot
