@@ -81,7 +81,7 @@ class PathPlanner:
 
         # Goal Parameters
         self.goal_point = goal_point  # m
-        self.stopping_dist = stopping_dist  # m # the minimum distance btw the goal point and the final position where the robot should come to stop 
+        self.stopping_dist = stopping_dist  # m # the minimum distance btw the goal point and the final position where the robot should come to stop
 
         # Trajectory Simulation Parameters
         self.timestep = 1.0  # s
@@ -117,56 +117,66 @@ class PathPlanner:
     @typechecked
     def sample_map_space(self) -> np.ndarray:
         """
-        select and return the random point lies within the map boundary 
-        return an [x,y] coordinate to drive the robot towards 
+        select and return the random point lies within the map boundary
+        return an [x,y] coordinate to drive the robot towards
 
-        return: (2, 1) shape point 
+        return: (2, 1) shape point
         """
-        # self.map_shape, self.boundary 
+        # self.map_shape, self.boundary
         # (b - a) * random_sample() + a
         random_p = np.random.random_sample(2)
-        random_x = (self.bounds[0,1] - self.bounds[0,0]) * random_p[0] + self.bounds[0,0]
-        random_y = (self.bounds[1,1] - self.bounds[1,0]) * random_p[1] + self.bounds[1,0]
-        
+        random_x = (self.bounds[0, 1] - self.bounds[0, 0]) * random_p[0] + self.bounds[
+            0, 0
+        ]
+        random_y = (self.bounds[1, 1] - self.bounds[1, 0]) * random_p[1] + self.bounds[
+            1, 0
+        ]
+
         return np.array([random_x, random_y]).reshape(2, 1)
 
     def check_if_duplicate(self, point) -> bool:
         """
-        Check if point is a duplicate of an already existing node in the list 
+        Check if point is a duplicate of an already existing node in the list
         Class Node object are in self.nodes, and assumes that point is numpy array ((2,1))
 
-        # Assumed that the point is in shape of (2,1) 
+        # Assumed that the point is in shape of (2,1)
 
-        Input: A point to check if it already exist in the node list 
-        Return: Boolean 
+        Input: A point to check if it already exist in the node list
+        Return: Boolean
         """
 
         # self.nodes = [Node(np.zeros((3, 1)), -1, 0)]
         for cur_node in self.nodes:
-            if cur_node.point[0][0] == point[0][0] and cur_node.point[1][0] == point[1][0]:
-                return True 
+            if (
+                cur_node.point[0][0] == point[0][0]
+                and cur_node.point[1][0] == point[1][0]
+            ):
+                return True
         return False
 
     def closest_node(self, point):
         """
-        Implement a method to get the closest node to a sapled point. 
+        Implement a method to get the closest node to a sapled point.
         Assumed that the point in shape of (2,1)
 
-        Input: A current point needs to find the closest node 
-        Return: the index of the closest node 
+        Input: A current point needs to find the closest node
+        Return: the index of the closest node
         """
-        min_distance = 100000000 
-        min_idx = -1 
+        min_distance = 100000000
+        min_idx = -1
         if len(self.nodes) >= 1:
             for idx, cur_node in enumerate(self.nodes):
                 # print(cur_node.point.shape, point.shape)
-                cur_distance = np.sqrt((cur_node.point[0] - point[0][0]) ** 2 + (cur_node.point[1] - point[1][0]) **2 )
+                cur_distance = np.sqrt(
+                    (cur_node.point[0] - point[0][0]) ** 2
+                    + (cur_node.point[1] - point[1][0]) ** 2
+                )
                 min_distance = min(cur_distance, min_distance)
                 if min_distance == cur_distance:
-                    min_idx = idx 
-            return min_idx 
-        assert len(self.nodes) != 0 
- 
+                    min_idx = idx
+            return min_idx
+        assert len(self.nodes) != 0
+
     @typechecked
     def simulate_trajectory(
         self, node_i: np.ndarray, point_s: np.ndarray
@@ -192,27 +202,6 @@ class PathPlanner:
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
         return robot_traj
-
-    @staticmethod
-    @typechecked
-    def calculate_angle_between_vectors(v_1: np.ndarray, v_2: np.ndarray) -> float:
-        """Calculates the angle betweent two vectors
-
-        Answer is returned in radians.
-        """
-        dot_product = np.dot(v_1, v_2)
-
-        magnitude_v_1 = np.linalg.norm(v_1)
-        magnitude_v_2 = np.linalg.norm(v_2)
-
-        cos_theta = dot_product / (magnitude_v_1 * magnitude_v_2)
-
-        theta = np.arccos(cos_theta)
-
-        # Check the sign
-        theta = theta if theta <= np.pi else theta
-        return theta
-
 
     @typechecked
     def robot_controller(self, node_i, point_s) -> tuple[float, float]:
@@ -294,7 +283,7 @@ class PathPlanner:
             func=system_dynamics, y0=[x_0, y_0, theta_0], t=t, args=(vel, rot_vel)
         )
 
-        return solution # (100, 3)
+        return solution  # (N, 3)
 
     @typechecked
     def point_to_cell(self, point: np.ndarray) -> np.ndarray:
@@ -311,10 +300,10 @@ class PathPlanner:
                         The output is an N by 2 matrix, where the first column contains x indices and the
                         second column contains y indices.
         """
-        # if point.ndim != 2:
-        #     raise ValueError(
-        #         f"Input array must be 2-dimensional, received {point.ndim}"
-        #     )
+        if point.ndim != 2:
+            raise ValueError(
+                f"Input array must be 2-dimensional, received {point.ndim}"
+            )
 
         if point.shape[1] != 2:
             raise ValueError(
@@ -343,10 +332,10 @@ class PathPlanner:
             The size of the circle footprint is determined by the robot's radius and the map settings.
         """
 
-        # if points.ndim != 2:
-        #     raise ValueError(
-        #         f"Input array must be 2-dimensional, received {points.ndim}"
-        #     )
+        if points.ndim != 2:
+            raise ValueError(
+                f"Input array must be 2-dimensional, received {points.ndim}"
+            )
 
         if points.shape[1] != 2:
             raise ValueError(
@@ -409,8 +398,8 @@ class PathPlanner:
 
         # Fill in the path
         for i in range(1, self.num_substeps):
-            path[i, 0] = path[i-1, 0] + dx
-            path[i, 1] = path[i-1, 1] + dy
+            path[i, 0] = path[i - 1, 0] + dx
+            path[i, 1] = path[i - 1, 1] + dy
             path[i, 2] = node_i.point[2]  # Keep theta the same
 
         return path
@@ -418,18 +407,18 @@ class PathPlanner:
     def cost_to_come(self, trajectory_o):
         """
         Computes the total Euclidean distance travelled between all substeps in a given trajectory.
-        
+
         Args:
             trajectory_o (np.array): Nx3 array of the path taken betweeen two points.
-            
+
         Returns:
             cost (float): Cost of traversing the given trajectory.
         """
         # The cost to get to a node from lavalle
         cost = 0.0
         for i in range(1, self.num_substeps):
-            dx = trajectory_o[i, 0] - trajectory_o[i-1, 0]
-            dy = trajectory_o[i, 1] - trajectory_o[i-1, 1]
+            dx = trajectory_o[i, 0] - trajectory_o[i - 1, 0]
+            dy = trajectory_o[i, 1] - trajectory_o[i - 1, 1]
             cost += np.sqrt(dx**2 + dy**2)
         return cost
 
@@ -460,46 +449,72 @@ class PathPlanner:
             # Recursively update the children of this child node
             self.update_children(child_id)
 
+    @typechecked
+    def check_collision(self, trajectory: np.ndarray) -> bool:
+        if trajectory.ndim != 2:
+            raise ValueError(
+                f"Input array must be 2-dimensional, received {trajectory.ndim}"
+            )
+
+        if trajectory.shape[1] != 3:
+            raise ValueError(
+                f"Input array must have a shape of Nx3, received: {trajectory.shape}"
+            )
+
+        cell = self.point_to_cell(
+            trajectory[:, 0:2]
+        )  # convert the all the points to cell coordinates
+
+        for cur_cell in cell:
+            # check if the cell is within the bounds of the map
+            if not (
+                0 <= cur_cell[0]
+                and cur_cell[0] < self.map_shape[1]
+                and 0 <= cur_cell[1]
+                and cur_cell[1] < self.map_shape[0]
+            ):
+                return True  # out of bound
+
+        # N * (61, 2) = N point, 61 points that make up a circle (61*2)
+        footprints = self.points_to_robot_circle(
+            trajectory[:, 0:2]
+        )  # robot's footprint in map coordinates
+
+        # check each cell in the footprint for collsion
+        for footprint in footprints:
+            for point in footprint:
+                circle_x, circle_y = point
+                # Make sure the point is within the map bounds
+                if not (
+                    0 <= circle_x
+                    and circle_x < self.map_shape[1]
+                    and 0 <= circle_y
+                    and circle_y < self.map_shape[0]
+                ):
+                    continue  # Skip checking if outside the map
+                # Check if the point is an obstacle
+                # if 0, the robot cannn't go there there is an obstacle.
+                if (
+                    self.occupancy_map[circle_y, circle_x] == 0
+                ):  # on image, y-th "row", x-th column
+                    # Collision detected
+                    return True
+
+        return False  # No collsion detected
+
     # Planner Functions
     def rrt_planning(self):
         """
-        RRT alogrithm on the given map and robot 
-        1) sample one random point 
-        2) find the closest point in the node list 
-        3) find trajectory to the closest point 
+        RRT alogrithm on the given map and robot
+        1) sample one random point
+        2) find the closest point in the node list
+        3) find trajectory to the closest point
         4) check for the collision (if the trajectory collides with an obstacle)
-            - if path to NEW_STATE is collision free 
-                - Add end point 
-                - Add path from nearest node to end point 
-        5) retrun success/failure and current tree 
+            - if path to NEW_STATE is collision free
+                - Add end point
+                - Add path from nearest node to end point
+        5) retrun success/failure and current tree
         """
-
-        def check_collision(trajectory):
-            cell = self.point_to_cell(trajectory[:, 0:2]) # convert the all the points to cell coordinates 
-
-            for cur_cell in cell:
-                # check if the cell is within the bounds of the map 
-                if not (0 <= cur_cell[0] and cur_cell[0] < self.map_shape[1] and 0 <= cur_cell[1] and cur_cell[1] < self.map_shape[0]):
-                    return True # out of bound 
-            
-            # N * (61, 2) = N point, 61 points that make up a circle (61*2)
-            footprint = self.points_to_robot_circle(trajectory[:, 0:2]) # robot's footprint in map coordinates 
-            
-            # check each cell in the footprint for collsion 
-            for cell in footprint:
-                for point in cell:
-                    circle_x, circle_y = point
-                    # Make sure the point is within the map bounds
-                    if not (0 <= circle_x and circle_x < self.map_shape[1] and 0 <= circle_y and circle_y < self.map_shape[0]):
-                        continue  # Skip checking if outside the map
-                    # Check if the point is an obstacle
-                    # if 0, the robot cannn't go there there is an obstacle. 
-                    if self.occupancy_map[circle_y, circle_x] == 0:  # on image, y-th "row", x-th column
-                        # Collision detected
-                        return True
-            
-            return False # No collsion detected 
-          
 
         def is_goal_reached(node_point):
             """
@@ -523,13 +538,13 @@ class PathPlanner:
                 return True
             else:
                 return False
-            
+
         def rrt_cost_come(trajectory_o):
             cost = 0.0
             for i in range(1, len(trajectory_o)):
                 # Calculate the distance between consecutive points
-                dist = np.linalg.norm(trajectory_o[i] - trajectory_o[i-1])
-                
+                dist = np.linalg.norm(trajectory_o[i] - trajectory_o[i - 1])
+
                 # Accumulate the cost
                 cost += dist
 
@@ -540,20 +555,20 @@ class PathPlanner:
             point = self.sample_map_space()
 
             closest_node_id = self.closest_node(point)
-            closest_node = self.nodes[closest_node_id] # (3, 1)
-            
+            closest_node = self.nodes[closest_node_id]  # (3, 1)
 
             # Simulate driving the robot towards the closest point
             trajectory_o = self.simulate_trajectory(
                 closest_node.point.reshape(3), point.reshape(2)
-            ) #(100,3)
-            
+            )  # (100,3)
 
             # Check for collisions and add safe points to list of nodes.
-            if not check_collision(trajectory_o):
-                # If no collision, Add the new node 
+            if not self.check_collision(trajectory_o):
+                # If no collision, Add the new node
                 new_node_point = trajectory_o[-1]  # The last point of the trajectory
-                new_node_cost = closest_node.cost + rrt_cost_come(trajectory_o) # update cost-to-come in rrt planning but does not use it to rewire the edge 
+                new_node_cost = (
+                    closest_node.cost + rrt_cost_come(trajectory_o)
+                )  # update cost-to-come in rrt planning but does not use it to rewire the edge
                 new_node = Node(new_node_point, closest_node_id, new_node_cost)
                 self.nodes.append(new_node)
                 new_node_id = len(self.nodes) - 1

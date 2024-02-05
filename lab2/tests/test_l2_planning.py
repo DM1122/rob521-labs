@@ -4,8 +4,10 @@ from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
+import time
 
-@pytest.fixture 
+
+@pytest.fixture
 def path_planner_instance():
     return PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
@@ -92,6 +94,7 @@ def test_trajectory_rollout():
 
     output = sut.trajectory_rollout(vel, rot_vel)
     print(output.shape)
+    print(output)
     # Plot results
     plt.figure()
     plt.plot(output[:, 0], output[:, 1], "b-", label="Trajectory")
@@ -109,20 +112,6 @@ def test_trajectory_rollout():
     plt.legend()
     plt.grid()
     plt.show()
-
-
-@pytest.mark.parametrize(
-    "vector_1, vector_2, expected_output",
-    [
-        (np.array([1, 1]), np.array([1, 0]), np.pi / 4),  # 45 degrees in radians
-        (np.array([1, -1]), np.array([1, 0]), -np.pi / 4),  # 90 degrees in radians
-        (np.array([-1, 1]), np.array([1, 1]), np.pi / 2),  # 90 degrees in radians
-        (np.array([-2, 0]), np.array([0, 1]), np.pi),  # 180 degrees in radians
-    ],
-)
-def test_calculate_angle_between_vectors(vector_1, vector_2, expected_output):
-    output = PathPlanner.calculate_angle_between_vectors(vector_1, vector_2)
-    assert np.isclose(output, expected_output)
 
 
 def test_robot_controller_max_vel(
@@ -216,29 +205,6 @@ def test_robot_controller_max_rot_minus_90(
 
     assert np.isclose(rot_vel, -sut.rot_vel_max)
 
-# def test_robot_controller_type_match(
-#     initial_point=np.array([0, 0, 0]),
-#     final_point=np.array(
-#         [
-#             10000,
-#             0,
-#         ]
-#     ),
-# ):
-#     """Test to ensure the robot is commanded to its highest velocity and no rotation
-#     when the target point is far but straight ahead"""
-#     sut = PathPlanner(
-#         map_file_path=Path("maps/willowgarageworld_05res.png"),
-#         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-#         goal_point=np.array([[10], [10]]),
-#         stopping_dist=0.5,
-#     )
-
-#     vel, rot_vel = sut.robot_controller(initial_point, final_point)
-
-#     assert vel == sut.vel_max
-#     assert rot_vel == 0
-
 
 @pytest.mark.parametrize("expected_output", np.array([[2, 1]]))
 def test_sample_map_space(expected_output):
@@ -328,3 +294,22 @@ def test_rrt_planning(path_planner_instance):
     # print(len(nodes))
     # assert isinstance(nodes, list)  # Check if 'nodes' is a list
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
+
+
+def test_check_collision_true():
+    """Test for trajectory collision checking. Result should be true (a collision
+    is encountered)"""
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[15], [0]]),
+        stopping_dist=0.5,
+    )
+
+    trajectory = np.array([[0, 0, 0], [10, 0, 0], [15, 0, 0]])
+
+    output = sut.check_collision(trajectory)
+
+    # while True:
+    #     time.sleep(1)
+    assert output == True
