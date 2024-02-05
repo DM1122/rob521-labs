@@ -124,16 +124,19 @@ class PathPlanner:
 
         return: (2, 1) shape point
         """
-        # self.map_shape, self.boundary
-        # (b - a) * random_sample() + a
-        random_p = np.random.random_sample(2)
-        random_x = (self.bounds[0, 1] - self.bounds[0, 0]) * random_p[0] + self.bounds[
-            0, 0
-        ]
-        random_y = (self.bounds[1, 1] - self.bounds[1, 0]) * random_p[1] + self.bounds[
-            1, 0
-        ]
+        x_length = 15
+        x_low = -3
+        y_length = 10
+        y_low = -5
 
+        # random_x = (self.bounds[0, 0] - self.bounds[1, 0]) * random_p[0] + self.bounds[
+        #     1, 0
+        # ]
+        # random_y = (self.bounds[0, 1] - self.bounds[1, 1]) * random_p[1] + self.bounds[
+        #     1, 1
+        # ]
+        random_x = x_length * random_p[0] + x_low
+        random_y = y_length * random_p[1] + y_low
         return np.array([random_x, random_y]).reshape(2, 1)
 
     def check_if_duplicate(self, point) -> bool:
@@ -633,9 +636,11 @@ class PathPlanner:
             if trajectory_o is None:
                 continue
             trajectory_cost = self.cost_to_come(trajectory_o)
-            
+
             # # Add new node with associated costs
-            new_node = Node(trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost)
+            new_node = Node(
+                trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost
+            )
             self.nodes.append(new_node)
             self.window.add_point(new_point.flatten())
             closest_node.children_ids.append(len(self.nodes) - 1)
@@ -652,7 +657,9 @@ class PathPlanner:
                     continue  # Skip if we are checking the already existing connection
 
                 near_node = self.nodes[near_node_id]
-                new_trajectory = self.connect_node_to_point(near_node, curr_node.point[:-1]) # near_node ---> curr_node
+                new_trajectory = self.connect_node_to_point(
+                    near_node, curr_node.point[:-1]
+                )  # near_node ---> curr_node
                 if new_trajectory is None:
                     continue  # Skip if collision is detected for this node
 
@@ -669,19 +676,21 @@ class PathPlanner:
                         curr_node_id
                     )  # add current node as a child of the new parent
 
-            #Near point rewiring, treats the new node as a parent and checks for potential children
+            # Near point rewiring, treats the new node as a parent and checks for potential children
             rewire_accomplished = True
-            #while rewire_accomplished:
-            for i in range(5): # for pytest  
-                rewire_accomplished = False # flag to check for rewiring
-                         
+            # while rewire_accomplished:
+            for i in range(5):  # for pytest
+                rewire_accomplished = False  # flag to check for rewiring
+
                 near_nodes = find_near_nodes(curr_node.point)
                 for near_node_id in near_nodes:
                     if near_node_id == curr_node.parent_id:
                         continue  # Skip if we are checking the already existing connection
 
                     near_node = self.nodes[near_node_id]
-                    new_trajectory = self.connect_node_to_point(curr_node, near_node.point[:-1]) # curr_node ---> near_node
+                    new_trajectory = self.connect_node_to_point(
+                        curr_node, near_node.point[:-1]
+                    )  # curr_node ---> near_node
                     if new_trajectory is None:
                         continue  # Skip if collision is detected for this node
 
@@ -703,7 +712,7 @@ class PathPlanner:
                         curr_node = near_node  # set the near node as the new current node to test
                         rewire_accomplished = True  # update flag
                         break
-                    
+
             # Check for early end
             if self.is_goal_reached(self.nodes[-1].point):
                 return self.nodes
