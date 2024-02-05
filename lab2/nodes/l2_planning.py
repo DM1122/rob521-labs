@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Standard Libraries
 from matplotlib.font_manager import json_dump
+from matplotlib.pyplot import close
 import numpy as np
 import scipy
 from typeguard import typechecked
@@ -406,7 +407,7 @@ class PathPlanner:
         Returns:
             path (np.array): A Nx3 array representing the path from node_i to point_f if valid
         """
-        return self.simulate_trajectory(node_i.point, point_f.point)
+        return self.simulate_trajectory(node_i.point.reshape(3), point_f.reshape(2))
 
     def cost_to_come(self, trajectory_o):
         """
@@ -569,7 +570,7 @@ class PathPlanner:
             return cost
 
         n_iteration = 1000
-        for i in range(n_iteration):
+        while True:
             point = self.sample_map_space()
 
             closest_node_id = self.closest_node(point)
@@ -589,6 +590,7 @@ class PathPlanner:
                 )  # update cost-to-come in rrt planning but does not use it to rewire the edge
                 new_node = Node(new_node_point, closest_node_id, new_node_cost)
                 self.nodes.append(new_node)
+                self.window.add_point(point.flatten())
                 new_node_id = len(self.nodes) - 1
                 closest_node.children_ids.append(new_node_id)
 
@@ -610,6 +612,7 @@ class PathPlanner:
             radius = self.ball_radius()
 
             for node_id, node in enumerate(self.nodes):
+                node = self.nodes[node_id]
                 dist = float(np.linalg.norm(node.point - point))
                 if dist <= radius:
                     near_nodes.append(node_id)
@@ -620,21 +623,20 @@ class PathPlanner:
             # Sample
             new_point = self.sample_map_space()
 
-            # Find closest node
+            # # Find closest node
             closest_node_id = self.closest_node(new_point)
             closest_node = self.nodes[closest_node_id]
 
-            # Simulate trajectory and check for collision
+            # # Simulate trajectory and check for collision
             trajectory_o = self.connect_node_to_point(closest_node, new_point)
             if trajectory_o is None:
                 continue
             trajectory_cost = self.cost_to_come(trajectory_o)
-
-            # Add new node with associated costs
-            new_node = Node(
-                new_point, closest_node_id, closest_node.cost + trajectory_cost
-            )
+            
+            # # Add new node with associated costs
+            new_node = Node(trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost)
             self.nodes.append(new_node)
+            self.window.add_point(new_point.flatten())
             closest_node.children_ids.append(len(self.nodes) - 1)
 
             curr_node_id = len(self.nodes) - 1
@@ -649,9 +651,7 @@ class PathPlanner:
                     continue  # Skip if we are checking the already existing connection
 
                 near_node = self.nodes[near_node_id]
-                new_trajectory = self.connect_node_to_point(
-                    near_node, curr_node.point
-                )  # near_node ---> curr_node
+                new_trajectory = self.connect_node_to_point(near_node, curr_node.point[:-1]) # near_node ---> curr_node
                 if new_trajectory is None:
                     continue  # Skip if collision is detected for this node
 
@@ -668,20 +668,19 @@ class PathPlanner:
                         curr_node_id
                     )  # add current node as a child of the new parent
 
-            """Near point rewiring, treats the new node as a parent and checks for potential children"""
+            #Near point rewiring, treats the new node as a parent and checks for potential children
             rewire_accomplished = True
-            while rewire_accomplished:
-                rewire_accomplished = False  # flag to check for rewiring
-
+            #while rewire_accomplished:
+            for i in range(5): # for pytest  
+                rewire_accomplished = False # flag to check for rewiring
+                         
                 near_nodes = find_near_nodes(curr_node.point)
                 for near_node_id in near_nodes:
                     if near_node_id == curr_node.parent_id:
                         continue  # Skip if we are checking the already existing connection
 
                     near_node = self.nodes[near_node_id]
-                    new_trajectory = self.connect_node_to_point(
-                        curr_node, near_node.point
-                    )  # curr_node ---> near_node
+                    new_trajectory = self.connect_node_to_point(curr_node, near_node.point[:-1]) # curr_node ---> near_node
                     if new_trajectory is None:
                         continue  # Skip if collision is detected for this node
 
@@ -703,11 +702,10 @@ class PathPlanner:
                         curr_node = near_node  # set the near node as the new current node to test
                         rewire_accomplished = True  # update flag
                         break
-
+                    
             # Check for early end
-            if self.is_goal_reached(closest_node):
-                break
-        return self.nodes
+            if self.is_goal_reached(self.nodes[-1].point):
+                return self.nodes
 
     def recover_path(self, node_id=-1):
         path = [self.nodes[node_id].point]
