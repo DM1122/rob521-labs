@@ -6,9 +6,9 @@ flowchart TB
     task2[Task 2 David]
     task3[Task 3 Daye]
     task4[Task 4 Daye]
-    task5[Task 5]
+    task5[Task 5 Davin]
     task6[Task 6 David]
-    task7[Task 7]
+    task7[Task 7 Davin]
     task8[Task 8 Daye]
     endd((End))
     
