@@ -202,10 +202,11 @@ class PathPlanner:
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
+        robot_traj_global = robot_traj + node_i
 
-        collision = self.check_collision(robot_traj)
+        collision = self.check_collision(robot_traj_global)
         if not collision:
-            return robot_traj
+            return robot_traj_global
         else:
             return None
 
