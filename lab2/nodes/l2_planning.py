@@ -401,9 +401,9 @@ class PathPlanner:
             point_f (point): Destination point
 
         Returns:
-            path (np.array): A Nx3 array representing the path from node_i to point_f
+            path (np.array): A Nx3 array representing the path from node_i to point_f if valid
         """
-        return self.simulate_trajectory(node_i, point_f)
+        return self.simulate_trajectory(node_i.point, point_f)
 
     def cost_to_come(self, trajectory_o):
         """
