@@ -156,7 +156,7 @@ class PathPlanner:
 
     def closest_node(self, point):
         """
-        Implement a method to get the closest node to a sapled point.
+        Implement a method to get the closest node to a sampled point.
         Assumed that the point in shape of (2,1)
 
         Input: A current point needs to find the closest node
@@ -280,8 +280,8 @@ class PathPlanner:
         y_0 = 0
         theta_0 = 0
 
-        t_proj = 10  # numer of seconds to project into the future
-        t = np.linspace(0, t_proj, 100)
+        t_proj = self.timestep  # numer of seconds to project into the future
+        t = np.linspace(0, t_proj, self.num_substeps)
 
         # Solve ODE
         solution = odeint(
@@ -389,10 +389,7 @@ class PathPlanner:
 
     def connect_node_to_point(self, node_i, point_f):
         """
-        Generates a trajectory from the point in node_i to point_f in a 3xN array, where N
-        represents the # of substeps. Assumes that we are taking a straight-line path between
-        the two points and that the robot's orientation does not change while travelling from
-        node_i to point_f.
+        Generates a trajectory from the point in node_i to point_f in a Nx3 array.
         Args:
             node_i (node): Origin node
             point_f (point): Destination point
@@ -400,24 +397,7 @@ class PathPlanner:
         Returns:
             path (np.array): A Nx3 array representing the path from node_i to point_f
         """
-        # Given two nodes find the non-holonomic path that connects them
-        # Settings
-        # node is a 3 by 1 node
-        # point is a 2 by 1 point
-        path = np.zeros((self.num_substeps, 3))
-        path[0, :] = node_i.point.flatten()
-
-        # Calculate the step size for x and y
-        dx = (point_f[0] - node_i.point[0]) / self.num_substeps
-        dy = (point_f[1] - node_i.point[1]) / self.num_substeps
-
-        # Fill in the path
-        for i in range(1, self.num_substeps):
-            path[i, 0] = path[i - 1, 0] + dx
-            path[i, 1] = path[i - 1, 1] + dy
-            path[i, 2] = node_i.point[2]  # Keep theta the same
-
-        return path
+        return self.simulate_trajectory(node_i, point_f)
 
     def cost_to_come(self, trajectory_o):
         """
@@ -623,25 +603,43 @@ class PathPlanner:
     def rrt_star_planning(self):
         # This function performs RRT* for the given map and robot
         """
-        Currently performing a while loop
+        Currently performing a while loop, can be replaced with an iterative process to make use of
+        RRT*'s "anytime" capability.
         """
-        goal_found = False
-        while not goal_found:
+        # Helper function to find nodes that are within a certain radius to a given point
+        def find_near_nodes(point):
+            near_nodes = []
+            radius = self.ball_radius()
+            
+            for node_id, node in enumerate(self.nodes):
+                dist = np.linalg.norm(node.point - point)
+                if dist <= radius:
+                    near_nodes.append(node_id)
+                    
+            return near_nodes
+        
+        while True:
             # Sample
             point = self.sample_map_space()
 
             # Closest Node
-            closest_node_id = self.closest_node(point)
+            closest_node = self.nodes[self.closest_node(point)]
 
             # Simulate trajectory
-            trajectory_o = self.simulate_trajectory(
-                self.nodes[closest_node_id].point, point
-            )
+            trajectory_o = self.simulate_trajectory(closest_node.point, point)
             # Check for Collision
-            if self.check_collision(trajectory_o):
+            if trajectory_o is None:
                 continue
-            # continue to sample new point if collision is detected,proceed with function otherwise
 
+            # Calculate cost_to_come
+            trajectory_cost = self.cost_to_come(trajectory_o)
+            
+            # Add connection between new node and closest node:
+            self.nodes.append(Node(point, closest_node, trajectory_cost))
+            
+            # Add new_node as a child of the parent node:
+            closest_node.children_ids.append(len(self.nodes) - 1)
+            
             # Last node rewire
             print("TO DO: Last node rewiring")
 
@@ -649,8 +647,10 @@ class PathPlanner:
             print("TO DO: Near point rewiring")
 
             # Check for early end
-            if self.is_goal_reached(self.nodes[closest_node_id]):
-                return self.nodes
+            if self.is_goal_reached(closest_node):
+                break
+        return self.nodes
+            
 
     def recover_path(self, node_id=-1):
         path = [self.nodes[node_id].point]
