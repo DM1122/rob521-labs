@@ -165,12 +165,27 @@ class PathPlanner:
             return min_idx 
         assert len(self.nodes) != 0 
  
-    def simulate_trajectory(self, node_i, point_s):
-        # Simulates the non-holonomic motion of the robot.
-        # This function drives the robot from node_i towards point_s. This function does has many solutions!
-        # node_i is a 3 by 1 vector [x;y;theta] this can be used to construct the SE(2) matrix T_{OI} in course notation
-        # point_s is the sampled point vector [x; y]
-        print("TO DO: Implment a method to simulate a trajectory given a sampled point")
+    @typechecked
+    def simulate_trajectory(
+        self, node_i: np.ndarray, point_s: np.ndarray
+    ) -> np.ndarray:
+        """Simulates the non-holonomic motion of a robot towards a target point.
+
+        This function drives the robot from its current state (node_i) towards a
+        specified target point (point_s). It uses a robot controller to calculate
+        the necessary linear and angular velocities and then simulates the robot's
+        trajectory using these velocities.
+
+        Args:
+            node_i (numpy.array): A 3x1 vector representing the current state of the
+                                robot. It includes the robot's x and y
+                                coordinates and its orientation theta, i.e., [x; y; theta].
+            point_s (numpy.array): A 2x1 vector representing the target point in Cartesian
+                                coordinates, i.e., [x; y].
+
+        Returns:
+            numpy.array: An array representing the simulated trajectory of the robot.
+        """
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
