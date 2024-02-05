@@ -213,25 +213,6 @@ class PathPlanner:
         theta = theta if theta <= np.pi else theta
         return theta
 
-    def piecewise_linear_angle_function(angle):
-        """
-        A piecewise function that describes the relationship between the angle (in degrees)
-        between two vectors and a float value between -1 and 1 with a discontinuity at 180 degrees.
-        """
-        # Normalize the angle to be within [0, 360)
-        angle = angle % 360
-
-        if angle < 180:
-            # Linearly increase from 0 to 1 as the angle goes from 0 to 180
-            return angle / 180
-        elif angle == 180:
-            # Discontinuity at 180 degrees
-            return (
-                np.nan
-            )  # or return None if the jump should be represented as an undefined value
-        else:
-            # Linearly increase from -1 to 0 as the angle goes from 180 to 360
-            return -1 + (angle - 180) / 180
 
     @typechecked
     def robot_controller(self, node_i, point_s) -> tuple[float, float]:
