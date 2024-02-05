@@ -389,8 +389,8 @@ class PathPlanner:
         # Settings
         # node is a 3 by 1 node
         # point is a 2 by 1 point
-        path = np.zeros((3, self.num_substeps))
-        path[:, 0] = node_i.point.flatten()
+        path = np.zeros((self.num_substeps, 3))
+        path[0, :] = node_i.point.flatten()
 
         # Calculate the step size for x and y
         dx = (point_f[0] - node_i.point[0]) / self.num_substeps
@@ -518,6 +518,29 @@ class PathPlanner:
 
         return False  # No collsion detected
 
+    @typechecked
+    def is_goal_reached(self, node_point):
+        """
+        Check if the goal has been reached within the stopping distance.
+
+        Args:
+        node_point (np.ndarray): The current node point as a numpy array [x, y, theta].
+
+        Returns:
+        bool: True if the goal is reached, False otherwise.
+        """
+        # Extract the x, y coordinates of the node point and the goal point
+        node_x, node_y = node_point[0], node_point[1]
+        goal_x, goal_y = self.goal_point[0], self.goal_point[1]
+
+        # Compute the Euclidean distance between the current node and the goal point
+        distance_to_goal = np.sqrt((goal_x - node_x) ** 2 + (goal_y - node_y) ** 2)
+
+        # Check if the distance is within the specified stopping distance
+        if distance_to_goal <= self.stopping_dist:
+            return True
+        return False
+    
     # Planner Functions
     def rrt_planning(self):
         """
@@ -531,29 +554,6 @@ class PathPlanner:
                 - Add path from nearest node to end point
         5) retrun success/failure and current tree
         """
-
-        def is_goal_reached(node_point):
-            """
-            Check if the goal has been reached within the stopping distance.
-
-            Args:
-            node_point (np.ndarray): The current node point as a numpy array [x, y, theta].
-
-            Returns:
-            bool: True if the goal is reached, False otherwise.
-            """
-            # Extract the x, y coordinates of the node point and the goal point
-            node_x, node_y = node_point[0], node_point[1]
-            goal_x, goal_y = self.goal_point[0], self.goal_point[1]
-
-            # Compute the Euclidean distance between the current node and the goal point
-            distance_to_goal = np.sqrt((goal_x - node_x) ** 2 + (goal_y - node_y) ** 2)
-
-            # Check if the distance is within the specified stopping distance
-            if distance_to_goal <= self.stopping_dist:
-                return True
-            else:
-                return False
 
         def rrt_cost_come(trajectory_o):
             cost = 0.0
@@ -591,15 +591,17 @@ class PathPlanner:
                 closest_node.children_ids.append(new_node_id)
 
                 # Step 6: Check if goal is reached
-                if is_goal_reached(new_node_point):
+                if self.is_goal_reached(new_node_point):
                     return self.nodes
         return self.nodes
 
     def rrt_star_planning(self):
         # This function performs RRT* for the given map and robot
-        for i in range(
-            1
-        ):  # Most likely need more iterations than this to complete the map!
+        """
+        Currently performing a while loop 
+        """
+        goal_found = False
+        while(not goal_found):
             # Sample
             point = self.sample_map_space()
 
@@ -607,22 +609,22 @@ class PathPlanner:
             closest_node_id = self.closest_node(point)
 
             # Simulate trajectory
-            trajectory_o = self.simulate_trajectory(
-                self.nodes[closest_node_id].point, point
-            )
-
+            trajectory_o = self.simulate_trajectory(self.nodes[closest_node_id].point, point)
             # Check for Collision
-            print("TO DO: Check for collision.")
+            if (self.check_collision(trajectory_o)):
+                continue
+            # continue to sample new point if collision is detected,proceed with function otherwise
 
             # Last node rewire
             print("TO DO: Last node rewiring")
+            
 
             # Close node rewire
             print("TO DO: Near point rewiring")
 
             # Check for early end
-            print("TO DO: Check for early end")
-        return self.nodes
+            if (self.is_goal_reached(self.nodes[closest_node_id])):
+                return self.nodes
 
     def recover_path(self, node_id=-1):
         path = [self.nodes[node_id].point]
