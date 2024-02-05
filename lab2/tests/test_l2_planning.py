@@ -118,7 +118,7 @@ def test_robot_controller_max_vel(
     )
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
-
+    print(vel, rot_vel)
     assert vel == sut.vel_max
     assert rot_vel == 0
 
@@ -279,7 +279,8 @@ def test_rrt_planning(path_planner_instance):
     # print(len(nodes))
     # assert isinstance(nodes, list)  # Check if 'nodes' is a list
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
-    
+
+
 def test_rrt_star_planning(path_planner_instance):
     sut = path_planner_instance
     nodes = sut.rrt_star_planning()
