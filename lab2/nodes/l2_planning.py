@@ -180,7 +180,7 @@ class PathPlanner:
     @typechecked
     def simulate_trajectory(
         self, node_i: np.ndarray, point_s: np.ndarray
-    ) -> np.ndarray:
+    ) -> np.ndarray | None:
         """Simulates the non-holonomic motion of a robot towards a target point.
 
         This function drives the robot from its current state (node_i) towards a
@@ -196,12 +196,17 @@ class PathPlanner:
                                 coordinates, i.e., [x; y].
 
         Returns:
-            numpy.array: An array representing the simulated trajectory of the robot.
+            numpy.array|None: An array representing the simulated trajectory of the robot, or none if the trajectory is expected to collide
         """
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
-        return robot_traj
+
+        collision = self.check_collision(robot_traj)
+        if not collision:
+            return robot_traj
+        else:
+            return None
 
     @typechecked
     def robot_controller(self, node_i, point_s) -> tuple[float, float]:
@@ -480,6 +485,10 @@ class PathPlanner:
         cell = self.point_to_cell(
             trajectory[:, 0:2]
         )  # convert the all the points to cell coordinates
+
+        self.window.add_point(trajectory[3, 0:2], radius=2)
+
+        print(cell)
 
         for cur_cell in cell:
             # check if the cell is within the bounds of the map
