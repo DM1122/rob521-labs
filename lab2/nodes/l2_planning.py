@@ -451,6 +451,22 @@ class PathPlanner:
 
     @typechecked
     def check_collision(self, trajectory: np.ndarray) -> bool:
+        """
+        Determines if a given trajectory results in a collision based on the occupancy map and the robot's footprint.
+
+        The method evaluates if any point along the trajectory or the robot's footprint at those points
+        collides with an obstacle as defined in the occupancy map. , and represented as a 2-dimensional NumPy array
+        with each row being a point in the trajectory.
+
+        Args:
+            trajectory (np.ndarray): A 2-dimensional array representing the trajectory of
+                                    the robot. The trajectory is expected to be in metric
+                                    coordinates, not cell coordinates.
+        Returns:
+            bool: True if a collision is detected within the robot's footprint at any
+                point along the trajectory. False otherwise.
+        """
+
         if trajectory.ndim != 2:
             raise ValueError(
                 f"Input array must be 2-dimensional, received {trajectory.ndim}"
