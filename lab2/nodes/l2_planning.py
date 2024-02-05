@@ -403,7 +403,7 @@ class PathPlanner:
         Returns:
             path (np.array): A Nx3 array representing the path from node_i to point_f if valid
         """
-        return self.simulate_trajectory(node_i.point, point_f)
+        return self.simulate_trajectory(node_i.point, point_f.point)
 
     def cost_to_come(self, trajectory_o):
         """
@@ -442,7 +442,7 @@ class PathPlanner:
         for child_id in node.children_ids:
             child_node = self.nodes[child_id]
 
-            trajectory = self.connect_node_to_point(node.point, child_node.point)
+            trajectory = self.connect_node_to_point(node, child_node)
             trajectory_cost = self.cost_to_come(trajectory)
 
             child_node.cost = parent_cost + trajectory_cost
