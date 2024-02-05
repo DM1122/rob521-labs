@@ -106,7 +106,7 @@ class PathPlanner:
         # Pygame window for visualization
         self.window = pygame_utils_custom.PygameWindow(
             "Path Planner",
-            (1000, 1000),
+            (800, 800),
             self.occupancy_map.shape,
             map_file_path,
             self.map_settings_dict,
@@ -585,7 +585,7 @@ class PathPlanner:
             trajectory_o = self.simulate_trajectory(
                 closest_node.point.reshape(3), point.reshape(2)
             )  # (100,3)
-
+            print(trajectory_o[-1])
             # Check for collisions and add safe points to list of nodes.
             if not self.check_collision(trajectory_o):
                 # If no collision, Add the new node

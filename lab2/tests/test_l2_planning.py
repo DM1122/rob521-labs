@@ -12,7 +12,7 @@ def path_planner_instance():
     return PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[58], [-48]]),
+        goal_point=np.array([[10], [0]]),
         stopping_dist=0.5,
     )
 
@@ -259,8 +259,14 @@ def test_closest_node(input, expected_output):
 
 
 def test_rrt_planning(path_planner_instance):
-    sut = path_planner_instance
-    nodes = sut.rrt_planning()
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [0]]),
+        stopping_dist=0.5,
+    )
+    # nodes = sut.rrt_planning()
+
     # print(nodes[0].point.shape, nodes[1].shape)
     # print(nodes[0].point, nodes[1])
 
@@ -272,9 +278,9 @@ def test_rrt_planning(path_planner_instance):
     # for node in nodes:
     #     print(node.point)
 
-    print(len(nodes))
-    for node in nodes:
-        print(node.point)
+    # print(len(nodes))
+    # for node in nodes:
+    #     print(node.point)
 
     # print(len(nodes))
     # assert isinstance(nodes, list)  # Check if 'nodes' is a list
