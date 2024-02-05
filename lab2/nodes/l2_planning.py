@@ -180,7 +180,7 @@ class PathPlanner:
     @typechecked
     def simulate_trajectory(
         self, node_i: np.ndarray, point_s: np.ndarray
-    ) -> np.ndarray:
+    ) -> np.ndarray | None:
         """Simulates the non-holonomic motion of a robot towards a target point.
 
         This function drives the robot from its current state (node_i) towards a
@@ -196,12 +196,17 @@ class PathPlanner:
                                 coordinates, i.e., [x; y].
 
         Returns:
-            numpy.array: An array representing the simulated trajectory of the robot.
+            numpy.array|None: An array representing the simulated trajectory of the robot, or none if the trajectory is expected to collide
         """
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
-        return robot_traj
+
+        collision = self.check_collision(robot_traj)
+        if not collision:
+            return robot_traj
+        else:
+            return None
 
     @typechecked
     def robot_controller(self, node_i, point_s) -> tuple[float, float]:
@@ -290,7 +295,6 @@ class PathPlanner:
         """Converts a series of [x,y] points in the map to occupancy map cell indices.
 
         This function computes the cell indices in the occupancy map for each provided [x, y] point.
-        The points are assumed to be expressed in the map's bottom left corner reference frame.
 
         Args:
             point (np.ndarray): An N by 2 matrix of points of interest, where N is the number of points.
@@ -310,7 +314,18 @@ class PathPlanner:
                 f"Input array must have a shape of Nx2, received: {point.shape}"
             )
 
-        return np.floor(point * self.map_settings_dict["resolution"] ** -1).astype(int)
+        # Retrieve the origin from the map settings.
+        origin = self.map_settings_dict["origin"]  # origin: [x_offset, y_offset, ...]
+
+        # Adjust the points by the origin offset
+        adjusted_point = point - origin[:2]
+
+        # Compute cell indices
+        cell = np.floor(
+            adjusted_point * self.map_settings_dict["resolution"] ** -1
+        ).astype(int)
+
+        return cell
 
     @typechecked
     def points_to_robot_circle(self, points: np.ndarray) -> list[np.ndarray]:
@@ -480,6 +495,15 @@ class PathPlanner:
         cell = self.point_to_cell(
             trajectory[:, 0:2]
         )  # convert the all the points to cell coordinates
+
+        self.window.add_point(trajectory[0, 0:2], radius=2)
+
+        print(cell)
+        cell = cell.flatten()
+        print(cell[0])
+        print(cell[1])
+        print(self.occupancy_map)
+        print(self.occupancy_map[cell[0], cell[1]])
 
         for cur_cell in cell:
             # check if the cell is within the bounds of the map
