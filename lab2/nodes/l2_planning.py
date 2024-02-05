@@ -607,7 +607,7 @@ class PathPlanner:
             radius = self.ball_radius()
 
             for node_id, node in enumerate(self.nodes):
-                dist = np.linalg.norm(node.point - point)
+                dist = float(np.linalg.norm(node.point - point))
                 if dist <= radius:
                     near_nodes.append(node_id)
 
@@ -677,7 +677,7 @@ class PathPlanner:
                         self.nodes[near_node.parent_id].children_ids.remove(near_node_id) # remove near node as a child of its parent
                         near_node.parent_id = curr_node_id # update new parent of near node
                         curr_node.children_ids.append(near_node_id) # add near node as a child of the current node
-                        self.update_children(near_node) # update the children costs
+                        self.update_children(near_node_id) # update the children costs
                         curr_node = near_node # set the near node as the new current node to test
                         rewire_accomplished = True # update flag
                         break

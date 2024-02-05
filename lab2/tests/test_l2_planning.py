@@ -279,6 +279,11 @@ def test_rrt_planning(path_planner_instance):
     # print(len(nodes))
     # assert isinstance(nodes, list)  # Check if 'nodes' is a list
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
+    
+def test_rrt_star_planning(path_planner_instance):
+    sut = path_planner_instance
+    nodes = sut.rrt_star_planning()
+    print(len(nodes))
 
 
 @pytest.mark.parametrize(
