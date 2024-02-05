@@ -73,7 +73,7 @@ class PathPlanner:
             self.map_settings_dict["origin"][1]
             + self.map_shape[0] * self.map_settings_dict["resolution"]
         )
-        print(self.bounds)
+
         # Robot information
         self.robot_radius = 0.22  # m
         self.vel_max = 0.5  # m/s (Feel free to change!)
@@ -166,7 +166,6 @@ class PathPlanner:
         min_idx = -1
         if len(self.nodes) >= 1:
             for idx, cur_node in enumerate(self.nodes):
-                # print(cur_node.point.shape, point.shape)
                 cur_distance = np.sqrt(
                     (cur_node.point[0] - point[0][0]) ** 2
                     + (cur_node.point[1] - point[1][0]) ** 2
@@ -452,83 +451,71 @@ class PathPlanner:
             self.update_children(child_id)
 
     @typechecked
+    def is_trajectory_out_of_bounds(self, trajectory: np.ndarray) -> bool:
+        """
+        Checks if the trajectory is out of the bounds of the map.
+
+        Args:
+            trajectory (np.ndarray): A 2D array of shape (n, 3) where n is the number of points
+                                     in the trajectory, and each point is represented by (x, y) coordinates.
+
+        Returns:
+            bool: True if any point in the trajectory is out of bounds, False otherwise.
+        """
+        for point in trajectory:
+            x, y, _ = point
+            if not (
+                self.bounds[0, 0] <= x <= self.bounds[0, 1]
+                and self.bounds[1, 0] <= y <= self.bounds[1, 1]
+            ):
+                return True
+        return False
+
+    @typechecked
     def check_collision(self, trajectory: np.ndarray) -> bool:
         """
         Determines if a given trajectory results in a collision based on the occupancy map and the robot's footprint.
 
         The method evaluates if any point along the trajectory or the robot's footprint at those points
-        collides with an obstacle as defined in the occupancy map. , and represented as a 2-dimensional NumPy array
-        with each row being a point in the trajectory.
+        collides with an obstacle as defined in the occupancy map.
 
         Args:
             trajectory (np.ndarray): A 2-dimensional array representing the trajectory of
-                                    the robot. The trajectory is expected to be in metric
-                                    coordinates, not cell coordinates.
+                                    the robot in metric coordinates wrt map frame.
+
         Returns:
             bool: True if a collision is detected within the robot's footprint at any
                 point along the trajectory. False otherwise.
         """
 
-        if trajectory.ndim != 2:
+        # Validate trajectory dimensions
+        if trajectory.ndim != 2 or trajectory.shape[1] != 3:
             raise ValueError(
-                f"Input array must be 2-dimensional, received {trajectory.ndim}"
+                f"Trajectory must be a 2-dimensional array with shape Nx3, received: {trajectory.shape}"
             )
 
-        if trajectory.shape[1] != 3:
-            raise ValueError(
-                f"Input array must have a shape of Nx3, received: {trajectory.shape}"
-            )
+        bounds_check = self.is_trajectory_out_of_bounds(trajectory)
+        if bounds_check:
+            return True  # out of bounds
 
-        cell = self.point_to_cell(
-            trajectory[:, 0:2]
-        )  # convert the all the points to cell coordinates
+        # Convert trajectory points to cell coordinates
+        cells = self.point_to_cell(trajectory[:, 0:2])
 
-        self.window.add_point(trajectory[0, 0:2], radius=2)
+        # Generate robot footprints for each trajectory point
+        footprints = self.points_to_robot_circle(trajectory[:, 0:2])  # list[np.ndarray]
 
-        print(cell)
-        cell = cell.flatten()
-        print(cell[0])
-        print(cell[1])
-        print(self.occupancy_map)
-        np.savetxt("occ_map.txt", self.occupancy_map, fmt="%d")
-        print(self.occupancy_map[cell[0], cell[1]])
-
-        for cur_cell in cell:
-            # check if the cell is within the bounds of the map
-            if not (
-                0 <= cur_cell[0]
-                and cur_cell[0] < self.map_shape[1]
-                and 0 <= cur_cell[1]
-                and cur_cell[1] < self.map_shape[0]
-            ):
-                return True  # out of bound
-
-        # N * (61, 2) = N point, 61 points that make up a circle (61*2)
-        footprints = self.points_to_robot_circle(
-            trajectory[:, 0:2]
-        )  # robot's footprint in map coordinates
-
-        # check each cell in the footprint for collsion
+        # Check each cell in the footprint for collision
         for footprint in footprints:
             for point in footprint:
-                circle_x, circle_y = point
-                # Make sure the point is within the map bounds
-                if not (
-                    0 <= circle_x
-                    and circle_x < self.map_shape[1]
-                    and 0 <= circle_y
-                    and circle_y < self.map_shape[0]
-                ):
-                    continue  # Skip checking if outside the map
-                # Check if the point is an obstacle
-                # if 0, the robot cannn't go there there is an obstacle.
+                x, y = point
+                # Check if the point is within the map bounds
                 if (
-                    self.occupancy_map[circle_y, circle_x] == 0
-                ):  # on image, y-th "row", x-th column
-                    # Collision detected
-                    return True
-
-        return False  # No collsion detected
+                    0 <= x < self.occupancy_map.shape[1]
+                    and 0 <= y < self.occupancy_map.shape[0]
+                ):
+                    if self.occupancy_map[x, y] == 0:
+                        return True  # Collision detected
+        return False  # No collision detected
 
     @typechecked
     def is_goal_reached(self, node_point):
@@ -613,18 +600,19 @@ class PathPlanner:
         Currently performing a while loop, can be replaced with an iterative process to make use of
         RRT*'s "anytime" capability.
         """
+
         # Helper function to find nodes that are within a certain radius to a given point
         def find_near_nodes(point):
             near_nodes = []
             radius = self.ball_radius()
-            
+
             for node_id, node in enumerate(self.nodes):
                 dist = np.linalg.norm(node.point - point)
                 if dist <= radius:
                     near_nodes.append(node_id)
-                    
+
             return near_nodes
-        
+
         while True:
             # Sample
             point = self.sample_map_space()
@@ -640,13 +628,13 @@ class PathPlanner:
 
             # Calculate cost_to_come
             trajectory_cost = self.cost_to_come(trajectory_o)
-            
+
             # Add connection between new node and closest node:
             self.nodes.append(Node(point, closest_node, trajectory_cost))
-            
+
             # Add new_node as a child of the parent node:
             closest_node.children_ids.append(len(self.nodes) - 1)
-            
+
             # Last node rewire
             print("TO DO: Last node rewiring")
 
@@ -657,7 +645,6 @@ class PathPlanner:
             if self.is_goal_reached(closest_node):
                 break
         return self.nodes
-            
 
     def recover_path(self, node_id=-1):
         path = [self.nodes[node_id].point]

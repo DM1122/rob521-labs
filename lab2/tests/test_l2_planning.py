@@ -21,9 +21,13 @@ def path_planner_instance():
     "test_input, expected_output",
     [
         (
-            np.array([[-0.8, 0.8]]),
-            np.array([[599, 404]]),
+            np.array([[-0.8, 0.85]]),
+            np.array([[598, 404]]),
         ),  # should be around bottom left corner of first wall
+        (
+            np.array([[-0.85, 0.85]]),
+            np.array([[598, 403]]),
+        ),
     ],
 )
 def test_point_to_cell(test_input, expected_output):
@@ -44,9 +48,7 @@ def test_point_to_cell(test_input, expected_output):
     [
         np.array(
             [
-                [11, 20],
-                [16.8, 9.9],
-                [31.776, 55],
+                [-0.8, 0.8],
             ]
         ),
     ],
@@ -60,9 +62,7 @@ def test_points_to_robot_circle(test_input):
     )
 
     output = sut.points_to_robot_circle(test_input)
-    print(output[0].shape)
-    print(output[1].shape)
-    print(output[2].shape)
+    print(output)
 
 
 def test_trajectory_rollout():
@@ -281,17 +281,19 @@ def test_rrt_planning(path_planner_instance):
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
-# @pytest.mark.parametrize(
-#     "input, expected_output",
-#     [
-#         (np.array([[1], [2.1]]), 1),
-#         (np.array([[3], [25.5]]), 0),
-#         (np.array([[9], [-1.9]]), 0),
-#     ],
-# )
-def test_check_collision():
-    """Test for trajectory collision checking. Result should be true (a collision
-    is encountered)"""
+@pytest.mark.parametrize(
+    "test_input, expected_output",
+    [
+        (np.array([[-0.8, 0.85, 0]]), True),  # bottom left corner of first room wall
+        (
+            np.array([[-0.85, 0.85, 0]]),
+            True,
+        ),  # one cell to the left of the bottom left corner of first room wall (still true bc robot radius)
+        (np.array([[0, 0, 0]]), False),  # origin
+    ],
+)
+def test_check_collision(test_input, expected_output: bool):
+    """Test for trajectory collision checking."""
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -299,13 +301,9 @@ def test_check_collision():
         stopping_dist=0.5,
     )
 
-    trajectory = np.array([[15, 0, 0]])
+    output = sut.check_collision(test_input)
 
-    output = sut.check_collision(trajectory)
-
-    while True:
-        time.sleep(1)
-    assert output == True
+    assert output == expected_output
 
 
 def test_occ():
