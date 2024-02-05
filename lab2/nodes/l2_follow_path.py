@@ -214,7 +214,7 @@ class PathFollower():
             else:
                 # best_traj_idx = valid_opts[final_cost.argmin()]
                 best_traj_idx = valid_opts[np.argmin(final_cost[valid_opts])]
-                best_control = self.all_opts[best_traj_idx] # pick the bast one 
+                best_control = self.all_opts[best_traj_idx] # pick the bast one in map frame  
                 self.local_path_pub.publish(utils.se2_pose_list_to_path(local_paths[:, best_traj_idx], 'map'))
 
             # send command to robot
