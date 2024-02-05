@@ -15,18 +15,19 @@ from pathlib import Path
 import sys
 import json
 from scipy.integrate import odeint
+from typing import Optional, Tuple, List
 
-# Conditional import if in a poetry env
-print(sys.executable)
-if ".venv" in sys.executable:
+
+on_remote = False  # set this to true if running on the remote machine
+
+if not on_remote:
     from nodes import pygame_utils_custom
 else:
     import pygame_utils_custom
-from nodes import pygame_utils_custom
 
 
 def load_map(file_path: Path):
-    im = mpimg.imread(file_path)
+    im = mpimg.imread(str(file_path))
     if len(im.shape) > 2:
         im = im[:, :, 0]
     im_np = np.array(im)  # Whitespace is true, black is false
@@ -180,7 +181,7 @@ class PathPlanner:
     @typechecked
     def simulate_trajectory(
         self, node_i: np.ndarray, point_s: np.ndarray
-    ) -> np.ndarray | None:
+    ) -> Optional[np.ndarray]:
         """Simulates the non-holonomic motion of a robot towards a target point.
 
         This function drives the robot from its current state (node_i) towards a
@@ -209,7 +210,7 @@ class PathPlanner:
             return None
 
     @typechecked
-    def robot_controller(self, node_i, point_s) -> tuple[float, float]:
+    def robot_controller(self, node_i: np.ndarray, point_s: np.ndarray) -> Tuple[float, float]:
         """
         This controller determines the velocities that will nominally move the robot from node i to node s.
         Adjust the linear and rotational velocities based on the distance and the angular difference between
@@ -335,7 +336,7 @@ class PathPlanner:
         return cell
 
     @typechecked
-    def points_to_robot_circle(self, points: np.ndarray) -> list[np.ndarray]:
+    def points_to_robot_circle(self, points: np.ndarray) -> List[np.ndarray]:
         """
         Converts a series of [x, y] coordinates to robot map footprints for collision detection.
 
@@ -635,30 +636,35 @@ class PathPlanner:
             self.nodes.append(new_node)
             self.window.add_point(new_point.flatten())
             closest_node.children_ids.append(len(self.nodes) - 1)
-            
-            
+
             curr_node_id = len(self.nodes) - 1
             curr_node = self.nodes[curr_node_id]
-            
-            #Last node rewiring, treats the new node as a child and finds the best parent
-                        
+
+            """Last node rewiring, treats the new node as a child and finds the best parent"""
+
             # Find list of near node IDs within the ball radius
             near_nodes = find_near_nodes(curr_node.point)
             for near_node_id in near_nodes:
                 if near_node_id == curr_node.parent_id:
-                    continue # Skip if we are checking the already existing connection
-                
+                    continue  # Skip if we are checking the already existing connection
+
                 near_node = self.nodes[near_node_id]
                 new_trajectory = self.connect_node_to_point(near_node, curr_node.point[:-1]) # near_node ---> curr_node
                 if new_trajectory is None:
-                    continue # Skip if collision is detected for this node
-                
+                    continue  # Skip if collision is detected for this node
+
                 new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
                 if new_trajectory_cost < curr_node.cost:
-                    curr_node.cost = new_trajectory_cost # update cost of current node
-                    self.nodes[curr_node.parent_id].children_ids.remove(curr_node_id) # remove current node as a child of its current parent
-                    curr_node.parent_id = near_node_id # update new parent of current node
-                    near_node.children_ids.append(curr_node_id) # add current node as a child of the new parent
+                    curr_node.cost = new_trajectory_cost  # update cost of current node
+                    self.nodes[curr_node.parent_id].children_ids.remove(
+                        curr_node_id
+                    )  # remove current node as a child of its current parent
+                    curr_node.parent_id = (
+                        near_node_id  # update new parent of current node
+                    )
+                    near_node.children_ids.append(
+                        curr_node_id
+                    )  # add current node as a child of the new parent
 
             #Near point rewiring, treats the new node as a parent and checks for potential children
             rewire_accomplished = True
@@ -669,22 +675,30 @@ class PathPlanner:
                 near_nodes = find_near_nodes(curr_node.point)
                 for near_node_id in near_nodes:
                     if near_node_id == curr_node.parent_id:
-                        continue # Skip if we are checking the already existing connection
-                    
+                        continue  # Skip if we are checking the already existing connection
+
                     near_node = self.nodes[near_node_id]
                     new_trajectory = self.connect_node_to_point(curr_node, near_node.point[:-1]) # curr_node ---> near_node
                     if new_trajectory is None:
-                        continue # Skip if collision is detected for this node
-                    
-                    new_trajectory_cost = self.cost_to_come(new_trajectory) + curr_node.cost
+                        continue  # Skip if collision is detected for this node
+
+                    new_trajectory_cost = (
+                        self.cost_to_come(new_trajectory) + curr_node.cost
+                    )
                     if new_trajectory_cost < near_node.cost:
-                        near_node.cost = new_trajectory_cost # update cost of near node
-                        self.nodes[near_node.parent_id].children_ids.remove(near_node_id) # remove near node as a child of its parent
-                        near_node.parent_id = curr_node_id # update new parent of near node
-                        curr_node.children_ids.append(near_node_id) # add near node as a child of the current node
-                        self.update_children(near_node_id) # update the children costs
-                        curr_node = near_node # set the near node as the new current node to test
-                        rewire_accomplished = True # update flag
+                        near_node.cost = new_trajectory_cost  # update cost of near node
+                        self.nodes[near_node.parent_id].children_ids.remove(
+                            near_node_id
+                        )  # remove near node as a child of its parent
+                        near_node.parent_id = (
+                            curr_node_id  # update new parent of near node
+                        )
+                        curr_node.children_ids.append(
+                            near_node_id
+                        )  # add near node as a child of the current node
+                        self.update_children(near_node_id)  # update the children costs
+                        curr_node = near_node  # set the near node as the new current node to test
+                        rewire_accomplished = True  # update flag
                         break
                     
             # Check for early end
@@ -703,8 +717,12 @@ class PathPlanner:
 
 def main():
     # Set map information
-    map_file_path = Path("../maps/willowgarageworld_05res.png")
-    map_settings_path = Path("../maps/willowgarageworld_05res.yaml")
+    if not on_remote:
+        map_file_path = Path("../maps/willowgarageworld_05res.png")
+        map_settings_path = Path("../maps/willowgarageworld_05res.yaml")
+    else:
+        map_file_path = Path("maps/willowgarageworld_05res.png")
+        map_settings_path = Path("maps/willowgarageworld_05res.yaml")
 
     # robot information
     goal_point = np.array([[10], [10]])  # m
