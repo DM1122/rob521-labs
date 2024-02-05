@@ -407,7 +407,7 @@ class PathPlanner:
         Generates a trajectory from the point in node_i to point_f in a 3xN array, where N
         represents the # of substeps. Assumes that we are taking a straight-line path between
         the two points and that the robot's orientation does not change while travelling from
-        node_i to point_f. Collision checking will be done after the execution of this function.
+        node_i to point_f.
         Args:
             node_i (node): Origin node
             point_f (point): Destination point
