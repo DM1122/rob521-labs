@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 from scipy.linalg import block_diag
-from scipy.spatial.distance import cityblock
+from scipy.spatial.distance import cityblock #  calcuate the manhattan distance between two (x, y, z) vectors 
 import rospy
 import tf2_ros
 
@@ -16,6 +16,9 @@ from visualization_msgs.msg import Marker
 # ros and se2 conversion utils
 import utils
 
+# ode 
+from scipy.integrate import odeint 
+
 
 TRANS_GOAL_TOL = .1  # m, tolerance to consider a goal complete
 ROT_GOAL_TOL = .3  # rad, tolerance to consider a goal complete
@@ -25,6 +28,7 @@ CONTROL_RATE = 5  # Hz, how frequently control signals are sent
 # how far into the future the motion planning algorithm looks 
 CONTROL_HORIZON = 5  # seconds. if this is set too high and INTEGRATION_DT is too low, code will take a long time to run!
 INTEGRATION_DT = .025  # s, delta t to propagate trajectories forward by
+# base_link: robots's frame located at the centeral point of a robot 
 COLLISION_RADIUS = 0.225  # m, radius from base_link to use for collisions, min of 0.2077 based on dimensions of .281 x .306
 ROT_DIST_MULT = .1  # multiplier to change effect of rotational distance in choosing correct control
 OBS_DIST_MULT = .1  # multiplier to change the effect of low distance to obstacles on a path
@@ -67,7 +71,7 @@ class PathFollower():
 
 
         # collisions
-        self.collision_radius_pix = COLLISION_RADIUS / self.map_resolution
+        self.collision_radius_pix = COLLISION_RADIUS / self.map_resolution # map_resolution m/pix 
         self.collision_marker = Marker()
         self.collision_marker.header.frame_id = '/map'
         self.collision_marker.ns = '/collision_radius'
@@ -82,16 +86,16 @@ class PathFollower():
 
         # transforms
         self.map_baselink_tf = self.tf_buffer.lookup_transform('map', 'base_link', rospy.Time(0), rospy.Duration(2.0))
-        self.pose_in_map_np = np.zeros(3)
-        self.pos_in_map_pix = np.zeros(2)
+        self.pose_in_map_np = np.zeros(3) # INIT (x, y, theta) in map configuration
+        self.pos_in_map_pix = np.zeros(2) # INIT (x,y) pixel coordinate
         self.update_pose()
 
         # path variables
         cur_dir = os.path.dirname(os.path.realpath(__file__))
 
         # to use the temp hardcoded paths above, switch the comment on the following two lines
-        self.path_tuples = np.load(os.path.join(cur_dir, 'path.npy')).T
-        # self.path_tuples = np.array(TEMP_HARDCODE_PATH)
+        # self.path_tuples = np.load(os.path.join(cur_dir, 'path.npy')).T
+        self.path_tuples = np.array(TEMP_HARDCODE_PATH)
 
         self.path = utils.se2_pose_list_to_path(self.path_tuples, 'map')
         self.global_path_pub.publish(self.path)
@@ -102,7 +106,7 @@ class PathFollower():
 
         # trajectory rollout tools
         # self.all_opts is a Nx2 array with all N possible combinations of the t and v vels, scaled by integration dt
-        self.all_opts = np.array(np.meshgrid(TRANS_VEL_OPTS, ROT_VEL_OPTS)).T.reshape(-1, 2)
+        self.all_opts = np.array(np.meshgrid(TRANS_VEL_OPTS, ROT_VEL_OPTS)).T.reshape(-1, 2) # (44, 2) = (# of possible option * (trans_vel, rot_vel))
 
         # if there is a [0, 0] option, remove it
         all_zeros_index = (np.abs(self.all_opts) < [0.001, 0.001]).all(axis=1).nonzero()[0]
@@ -135,15 +139,30 @@ class PathFollower():
                 - perform trajectory rollout to generate potential local paths 
                 - reuse the trajectory rollout code from Task 2 (Check)
             """
-           
+            def system_dynamics(state, t, v, omega):
+                # Define the system of ODEs
+                x, y, theta = state
+                x_dot = v * np.cos(theta)
+                y_dot = v * np.sin(theta)
+                theta_dot = omega
+                return [x_dot, y_dot, theta_dot]
+            
             for t in range(1, self.horizon_timesteps + 1):
                 # propogate trajectory forward, assuming perfect control of velocity and no dynamic effects
-                for opt_idx, (trans_vel, rot_vel) in enumerate(self.all_opts_scaled):
-                    x, y, theta = local_paths[t-1, opt_idx]
-                    theta += rot_vel 
-                    x += trans_vel * np.cos(theta)
-                    y += trans_vel * np.sin(theta) 
-                    local_paths[t, opt_idx] = [x, y, theta]
+                for opt in range(self.num_opts):
+                    trans_vel, rot_vel = self.all_opts[opt]
+                    x, y, theta = local_paths[t - 1, opt]
+                    # new_x = x + trans_vel * np.cos(theta) * INTEGRATION_DT # already scaled value 
+                    # new_y = y + trans_vel * np.sin(theta) * INTEGRATION_DT
+                    # new_theta = theta + rot_vel * INTEGRATION_DT
+                    
+                    # Solve ODE
+                    solution = odeint(
+                        func=system_dynamics, y0=[x, y, theta], t=t, args=(trans_vel, rot_vel)
+                    )
+                    new_x, new_y, new_theta = solution 
+                    local_paths[t, opt] = [new_x, new_y, new_theta]
+
             """
             Step 2) Collision Check 
              - Check the points in local_path_pixels for collisions
@@ -152,19 +171,23 @@ class PathFollower():
             """
             # check all trajectory points for collisions
             # first find the closest collision point in the map to each local path point
+            """need to check collisions in pixel frame""" 
             local_paths_pixels = (self.map_origin[:2] + local_paths[:, :, :2]) / self.map_resolution
-            valid_opts = range(self.num_opts)
-            local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50 ## ? 
+            valid_opts = range(self.num_opts) # INIT 
+            local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50 # INIT set to high value 
 
+            # check the points in local_path_"""pixels""" for collisions 
+            # local_paths_pixels = (# of time steps needed to cover the CONTROLHORIZON, options of (v,w), each local path represented by 3 value )
             for opt in range(local_paths_pixels.shape[1]):
-                for timestep in range(local_paths_pixels.shape[0]):
-                    pos = local_paths_pixels[timestep, opt_idx]
-                    collision_distance = self.map_np[int(pos[1]), int(pos[0])] # Assuming map_np is a 2D occupancy grid 
-                    # TO DO: remove trajectories that were deemed to have collisions 
-                    if collision_distance < self.collision_radius_pix:
-                        valid_opts = valid_opts[valid_opts != opt_idx]
-                        break # no need to check further if a collision is detected 
-            valid_local_paths = local_paths[:, valid_opts]
+                for timestep in range(1, self.horizon_timesteps + 1):
+                    x, y = local_paths_pixels[timestep, opt, :2]
+                    # cityblock = manhanttan distance between two vector 
+                    # find the nearest boundary point and then compare it with collision_radius_pix 
+                    if np.min(cityblock(self.map_nonzero_idxes, [x, y])) < self.collision_radius_pix:
+                        local_paths_lowest_collision_dist[opt] = min(local_paths_lowest_collision_dist[opt], np.min(cityblock(self.map_nonzero_idxes, [x, y])))
+
+            # Remove trajectories that were deemed to have collisions
+            valid_opts = [opt for opt in range(self.num_opts) if local_paths_lowest_collision_dist[opt] > self.collision_radius_pix]
 
             """
             Calculate final cost and choose best option 
@@ -173,20 +196,24 @@ class PathFollower():
             # calculate final cost and choose best option
             final_cost = np.zeros(self.num_opts)
 
-            for i, opt_idx in enumerate(valid_opts):
-                trajectory = valid_local_paths[:, opt_idx]
-                # score based on distance to the current goal 
-                goal_dist = np.linalg.nort(trajectory[-1, :2] - self.cur_goal[:2])
-                # score based on distance to nearst obstacle 
-                obs_dists = local_paths_lowest_collision_dist[opt_idx]
-                # combine the scores 
-                final_cost[i] = goal_dist + (OBS_DIST_MULT * obs_dists)
+            # for i, opt_idx in enumerate(valid_opts):
+            #     trajectory = valid_local_paths[:, opt_idx]
+            #     # score based on distance to the current goal 
+            #     goal_dist = np.linalg.nort(trajectory[-1, :2] - self.cur_goal[:2])
+            #     # score based on distance to nearst obstacle 
+            #     obs_dists = local_paths_lowest_collision_dist[opt_idx]
+            #     # combine the scores 
+            #     final_cost[i] = goal_dist + (OBS_DIST_MULT * obs_dists)
 
+            for opt in valid_opts:
+                # Example cost function: distance to goal (more sophisticated cost functions can be used)
+                final_cost[opt] = np.linalg.norm(local_paths[-1, opt, :2] - self.cur_goal[:2])
 
             if final_cost.size == 0:  # hardcoded recovery if all options have collision
                 control = [-.1, 0]
             else:
-                best_traj_idx = valid_opts[final_cost.argmin()]
+                # best_traj_idx = valid_opts[final_cost.argmin()]
+                best_traj_idx = valid_opts[np.argmin(final_cost[valid_opts])]
                 best_control = self.all_opts[best_traj_idx] # pick the bast one 
                 self.local_path_pub.publish(utils.se2_pose_list_to_path(local_paths[:, best_traj_idx], 'map'))
 
