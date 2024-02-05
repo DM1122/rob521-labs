@@ -124,6 +124,7 @@ class PathPlanner:
 
         return: (2, 1) shape point
         """
+        random_p = np.random.random_sample(2)
         x_length = 15
         x_low = -3
         y_length = 10
