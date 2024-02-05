@@ -209,7 +209,9 @@ class PathPlanner:
             return None
 
     @typechecked
-    def robot_controller(self, node_i: np.ndarray, point_s: np.ndarray) -> Tuple[float, float]:
+    def robot_controller(
+        self, node_i: np.ndarray, point_s: np.ndarray
+    ) -> Tuple[float, float]:
         """
         This controller determines the velocities that will nominally move the robot from node i to node s.
         Adjust the linear and rotational velocities based on the distance and the angular difference between
@@ -519,7 +521,7 @@ class PathPlanner:
         return False  # No collision detected
 
     @typechecked
-    def is_goal_reached(self, node_point):
+    def is_goal_reached(self, node_point: np.ndarray) -> bool:
         """
         Check if the goal has been reached within the stopping distance.
 
