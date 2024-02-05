@@ -304,29 +304,3 @@ def test_check_collision(test_input, expected_output: bool):
     output = sut.check_collision(test_input)
 
     assert output == expected_output
-
-
-def test_occ():
-    sut = PathPlanner(
-        map_file_path=Path("maps/willowgarageworld_05res.png"),
-        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[-0.8], [0.8]]),
-        stopping_dist=0.5,
-    )
-
-    broad = 1
-    index = [598, 403]
-
-    output = sut.occupancy_map[index[0], index[1]]
-
-    print(sut.occupancy_map.shape)
-    print(
-        sut.occupancy_map[
-            index[0] - broad : index[0] + broad + 1,
-            index[1] - broad : index[1] + broad + 1,
-        ]
-    )
-
-    while True:
-        time.sleep(1)
-    assert output == 0
