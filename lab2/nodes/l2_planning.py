@@ -503,6 +503,7 @@ class PathPlanner:
         print(cell[0])
         print(cell[1])
         print(self.occupancy_map)
+        np.savetxt("occ_map.txt", self.occupancy_map, fmt="%d")
         print(self.occupancy_map[cell[0], cell[1]])
 
         for cur_cell in cell:
@@ -564,7 +565,7 @@ class PathPlanner:
         if distance_to_goal <= self.stopping_dist:
             return True
         return False
-    
+
     # Planner Functions
     def rrt_planning(self):
         """
@@ -622,10 +623,10 @@ class PathPlanner:
     def rrt_star_planning(self):
         # This function performs RRT* for the given map and robot
         """
-        Currently performing a while loop 
+        Currently performing a while loop
         """
         goal_found = False
-        while(not goal_found):
+        while not goal_found:
             # Sample
             point = self.sample_map_space()
 
@@ -633,21 +634,22 @@ class PathPlanner:
             closest_node_id = self.closest_node(point)
 
             # Simulate trajectory
-            trajectory_o = self.simulate_trajectory(self.nodes[closest_node_id].point, point)
+            trajectory_o = self.simulate_trajectory(
+                self.nodes[closest_node_id].point, point
+            )
             # Check for Collision
-            if (self.check_collision(trajectory_o)):
+            if self.check_collision(trajectory_o):
                 continue
             # continue to sample new point if collision is detected,proceed with function otherwise
 
             # Last node rewire
             print("TO DO: Last node rewiring")
-            
 
             # Close node rewire
             print("TO DO: Near point rewiring")
 
             # Check for early end
-            if (self.is_goal_reached(self.nodes[closest_node_id])):
+            if self.is_goal_reached(self.nodes[closest_node_id]):
                 return self.nodes
 
     def recover_path(self, node_id=-1):
