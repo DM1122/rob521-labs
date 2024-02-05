@@ -61,6 +61,7 @@ class PathPlanner:
         self.map_settings_dict = load_map_yaml(map_settings_path)
 
         # Get the metric bounds of the map
+        # origin, the upper right point (real world) because it is multiplied by the resolution
         self.bounds = np.zeros([2, 2])  # m
         self.bounds[0, 0] = self.map_settings_dict["origin"][0]
         self.bounds[1, 0] = self.map_settings_dict["origin"][1]
@@ -72,7 +73,7 @@ class PathPlanner:
             self.map_settings_dict["origin"][1]
             + self.map_shape[0] * self.map_settings_dict["resolution"]
         )
-
+        print(self.bounds)
         # Robot information
         self.robot_radius = 0.22  # m
         self.vel_max = 0.5  # m/s (Feel free to change!)
@@ -158,7 +159,8 @@ class PathPlanner:
         min_idx = -1 
         if len(self.nodes) >= 1:
             for idx, cur_node in enumerate(self.nodes):
-                cur_distance = np.sqrt((cur_node.point[0][0] - point[0][0]) ** 2 + (cur_node.point[1][0] - point[1][0]) **2 )
+                # print(cur_node.point.shape, point.shape)
+                cur_distance = np.sqrt((cur_node.point[0] - point[0][0]) ** 2 + (cur_node.point[1] - point[1][0]) **2 )
                 min_distance = min(cur_distance, min_distance)
                 if min_distance == cur_distance:
                     min_idx = idx 
@@ -170,7 +172,7 @@ class PathPlanner:
         # This function drives the robot from node_i towards point_s. This function does has many solutions!
         # node_i is a 3 by 1 vector [x;y;theta] this can be used to construct the SE(2) matrix T_{OI} in course notation
         # point_s is the sampled point vector [x; y]
-        print("TO DO: Implment a method to simulate a trajectory given a sampled point")
+        # print("TO DO: Implment a method to simulate a trajectory given a sampled point")
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
@@ -313,10 +315,10 @@ class PathPlanner:
                         The output is an N by 2 matrix, where the first column contains x indices and the
                         second column contains y indices.
         """
-        if point.ndim != 2:
-            raise ValueError(
-                f"Input array must be 2-dimensional, received {point.ndim}"
-            )
+        # if point.ndim != 2:
+        #     raise ValueError(
+        #         f"Input array must be 2-dimensional, received {point.ndim}"
+        #     )
 
         if point.shape[1] != 2:
             raise ValueError(
@@ -345,10 +347,10 @@ class PathPlanner:
             The size of the circle footprint is determined by the robot's radius and the map settings.
         """
 
-        if points.ndim != 2:
-            raise ValueError(
-                f"Input array must be 2-dimensional, received {points.ndim}"
-            )
+        # if points.ndim != 2:
+        #     raise ValueError(
+        #         f"Input array must be 2-dimensional, received {points.ndim}"
+        #     )
 
         if points.shape[1] != 2:
             raise ValueError(
@@ -525,59 +527,46 @@ class PathPlanner:
                 return True
             else:
                 return False
+            
+        def rrt_cost_come(trajectory_o):
+            cost = 0.0
+            for i in range(1, len(trajectory_o)):
+                # Calculate the distance between consecutive points
+                dist = np.linalg.norm(trajectory_o[i] - trajectory_o[i-1])
+                
+                # Accumulate the cost
+                cost += dist
 
+            return cost
 
-        point = self.sample_map_space()
+        n_iteration = 1000
+        for i in range(n_iteration):
+            point = self.sample_map_space()
 
-        closest_node_id = self.closest_node(point)
-        closest_node = self.nodes[closest_node_id] # (3, 1)
-        
+            closest_node_id = self.closest_node(point)
+            closest_node = self.nodes[closest_node_id] # (3, 1)
+            
 
-        # Simulate driving the robot towards the closest point
-        trajectory_o = self.simulate_trajectory(
-            closest_node.point.reshape(3), point.reshape(2)
-        ) #(100,3)
+            # Simulate driving the robot towards the closest point
+            trajectory_o = self.simulate_trajectory(
+                closest_node.point.reshape(3), point.reshape(2)
+            ) #(100,3)
+            
 
-        if check_collision(trajectory_o):
-            return True 
-        else:
-            return False 
-        # return closest_node, point 
-        # return trajectory_o
+            # Check for collisions and add safe points to list of nodes.
+            if not check_collision(trajectory_o):
+                # If no collision, Add the new node 
+                new_node_point = trajectory_o[-1]  # The last point of the trajectory
+                new_node_cost = closest_node.cost + rrt_cost_come(trajectory_o) # update cost-to-come in rrt planning but does not use it to rewire the edge 
+                new_node = Node(new_node_point, closest_node_id, new_node_cost)
+                self.nodes.append(new_node)
+                new_node_id = len(self.nodes) - 1
+                closest_node.children_ids.append(new_node_id)
 
-
-        # n_iteration = 1
-        # # You do not need to demonstrate this function to the TAs, but it is left in for you to check your work
-        # for i in range(
-        #     n_iteration
-        # ):  # Most likely need more iterations than this to complete the map!
-        #     # Sample map space
-        #     point = self.sample_map_space()
-
-        #     # Get the closest point
-        #     closest_node_id = self.closest_node(point)
-        #     closest_node = self.nodes[closest_node_id]
-        #     # Simulate driving the robot towards the closest point
-        #     trajectory_o = self.simulate_trajectory(
-        #         closest_node.point.reshape(3), point.reshape(2)
-        #     ) #(100,3)
-
-        #     # Check for collisions
-        #     # Check for collisions and add safe points to list of nodes.
-
-        #     if not check_collision(trajectory_o):
-        #         # If no collision, Add the new node 
-        #         new_node_point = trajectory_o[-1]  # The last point of the trajectory
-        #         new_node_cost = closest_node.cost + self.cost_to_come(trajectory_o) # update cost-to-come in rrt planning but does not use it to rewire the edge 
-        #         new_node = Node(new_node_point, closest_node_id, new_node_cost)
-        #         self.nodes.append(new_node)
-        #         new_node_id = len(self.nodes) - 1
-        #         closest_node.children_ids.append(new_node_id)
-
-        #         # Step 6: Check if goal is reached
-        #         if is_goal_reached(new_node_point):
-        #             return self.nodes
-        # return self.nodes
+                # Step 6: Check if goal is reached
+                if is_goal_reached(new_node_point):
+                    return self.nodes
+        return self.nodes
 
     def rrt_star_planning(self):
         # This function performs RRT* for the given map and robot
