@@ -10,9 +10,7 @@ from scipy.integrate import odeint
 from jaxtyping import Float
 from beartype import beartype
 from typing import Optional, Tuple, List
-from pydantic import BaseModel, Field, PositiveInt, validator
-from astropy import units as unit
-from astropy.units import Quantity
+from pydantic import Field
 import random
 
 on_remote = False  # set this to true if running on the remote machine
@@ -47,6 +45,26 @@ class RectBounds(BaseModel):
     )
     width: PositiveFloat = Field(description="The width of the rectangle.")
     height: PositiveFloat = Field(description="The height of the rectangle.")
+
+    @property
+    @beartype
+    def top_left(self) -> Float[np.ndarray, "2"]:
+        return np.array([self.x, self.y])
+
+    @property
+    @beartype
+    def top_right(self) -> Float[np.ndarray, "2"]:
+        return np.array([self.x + self.width, self.y])
+
+    @property
+    @beartype
+    def bottom_left(self) -> Float[np.ndarray, "2"]:
+        return np.array([self.x, self.y + self.height])
+
+    @property
+    @beartype
+    def bottom_right(self) -> Float[np.ndarray, "2"]:
+        return np.array([self.x + self.width, self.y + self.height])
 
 
 # Node for building a graph

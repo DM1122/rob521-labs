@@ -4,7 +4,6 @@ from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
-from astropy import units as unit
 
 
 def test_init():
