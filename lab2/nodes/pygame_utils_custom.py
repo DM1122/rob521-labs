@@ -58,7 +58,6 @@ class PygameWindow:
         pygame.draw.circle(self.screen, color, point_vec, radius, width)
         pygame.display.update()
 
-
     def add_se2_pose(self, map_frame_pose, length=1, width=0, color=COLORS["k"]):
         map_frame_pose[1] = -map_frame_pose[1]  # for top left origin
         l = length

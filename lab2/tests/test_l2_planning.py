@@ -4,8 +4,6 @@ from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
-import time
-from nptyping import NDArray, Shape, Float, assert_isinstance
 
 
 def test_init():
