@@ -1,9 +1,10 @@
 from matplotlib import pyplot as plt
-from nodes.l2_planning import PathPlanner
+from nodes.l2_planning import PathPlanner, RectBounds
 from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
+from astropy import units as unit
 
 
 def test_init():
@@ -17,8 +18,14 @@ def test_init():
     print(sut)
 
 
-@pytest.mark.parametrize("expected_output", np.array([[2, 1]]))
-def test_sample_map_space(expected_output):
+@pytest.mark.parametrize(
+    "bounds",
+    [
+        RectBounds(x=0, y=0, width=10, height=10),
+        RectBounds(x=5, y=6, width=15, height=20),
+    ],
+)
+def test_sample_map_space(bounds):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -26,11 +33,12 @@ def test_sample_map_space(expected_output):
         stopping_dist=0.5,
     )
 
-    output = sut.sample_map_space()
-    print(f"\n{output}")
-    assert output.shape == (2, 1)
-    assert output[0] <= sut.bounds[0, 1] and output[0] >= sut.bounds[0, 0]
-    assert output[1] <= sut.bounds[1, 1] and output[1] >= sut.bounds[1, 0]
+    point = sut.sample_map_space(bounds)
+    print(point)
+
+    # Assert that the point lies within the given bounds
+    assert bounds.x <= point[0] <= bounds.x + bounds.width
+    assert bounds.y <= point[1] <= bounds.y + bounds.height
 
 
 @pytest.mark.parametrize(

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Standard Libraries
 import numpy as np
+from pydantic import BaseModel, PositiveFloat
 import yaml
 import matplotlib.image as mpimg
 from skimage.draw import disk
@@ -9,6 +10,10 @@ from scipy.integrate import odeint
 from jaxtyping import Float
 from beartype import beartype
 from typing import Optional, Tuple, List
+from pydantic import BaseModel, Field, PositiveInt, validator
+from astropy import units as unit
+from astropy.units import Quantity
+import random
 
 on_remote = False  # set this to true if running on the remote machine
 
@@ -31,6 +36,17 @@ def load_map_yaml(file_path: Path):
     with open(file_path, "r") as stream:
         map_settings_dict = yaml.safe_load(stream)
     return map_settings_dict
+
+
+class RectBounds(BaseModel):
+    x: float = Field(
+        description="The x-coordinate of the top left corner of the rectangle."
+    )
+    y: float = Field(
+        description="The y-coordinate of the top left corner of the rectangle."
+    )
+    width: PositiveFloat = Field(description="The width of the rectangle.")
+    height: PositiveFloat = Field(description="The height of the rectangle.")
 
 
 # Node for building a graph
@@ -109,29 +125,18 @@ class PathPlanner:
 
     # Functions required for RRT
     @beartype
-    def sample_map_space(self) -> Float[np.ndarray, "2 1"]:
+    def sample_map_space(self, bounds: RectBounds) -> Float[np.ndarray, "2"]:
         """
-        select and return the random point lies within the map boundary
-        return an [x,y] coordinate to drive the robot towards
-
-        return: (2, 1) shape point
+        Returns a random point (expressed in meters wrt map origin) that lies within the provided bounds.
         """
-        random_p = np.random.random_sample(2)
-        x_length = 15
-        x_low = -3
-        y_length = 10
-        y_low = -5
+        # Generate a random point within the bounds
+        random_x = random.uniform(bounds.x, bounds.x + bounds.width)
+        random_y = random.uniform(bounds.y, bounds.y + bounds.height)
 
-        # random_x = (self.bounds[0, 0] - self.bounds[1, 0]) * random_p[0] + self.bounds[
-        #     1, 0
-        # ]
-        # random_y = (self.bounds[0, 1] - self.bounds[1, 1]) * random_p[1] + self.bounds[
-        #     1, 1
-        # ]
-        random_x = x_length * random_p[0] + x_low
-        random_y = y_length * random_p[1] + y_low
+        # Create a numpy array with the random point
+        random_point = np.array([random_x, random_y], dtype=float)
 
-        return np.array([random_x, random_y]).reshape(2, 1)
+        return random_point
 
     def check_if_duplicate(self, point) -> bool:
         """

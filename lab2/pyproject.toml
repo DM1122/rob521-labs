@@ -17,6 +17,7 @@ pydantic = "^2.6.1"
 beartype = "^0.17.0"
 jaxtyping = "^0.2.25"
 jax = "^0.4.23"
+astropy = "^6.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
