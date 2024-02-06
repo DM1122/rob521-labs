@@ -16,7 +16,7 @@ import sys
 import json
 from scipy.integrate import odeint
 from typing import Optional, Tuple, List
-
+from nptyping import NDArray, Shape, Float
 
 on_remote = False  # set this to true if running on the remote machine
 
@@ -117,7 +117,7 @@ class PathPlanner:
 
     # Functions required for RRT
     @typechecked
-    def sample_map_space(self) -> np.ndarray:
+    def sample_map_space(self) -> Array4[np.int32]:
         """
         select and return the random point lies within the map boundary
         return an [x,y] coordinate to drive the robot towards
@@ -138,6 +138,7 @@ class PathPlanner:
         # ]
         random_x = x_length * random_p[0] + x_low
         random_y = y_length * random_p[1] + y_low
+
         return np.array([random_x, random_y]).reshape(2, 1)
 
     def check_if_duplicate(self, point) -> bool:

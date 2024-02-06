@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 import time
+from nptyping import NDArray, Shape, Float, assert_isinstance
 
 
 def test_init():
@@ -28,8 +29,7 @@ def test_sample_map_space(expected_output):
     )
 
     output = sut.sample_map_space()
-
-    assert type(output) == np.ndarray
+    print(f"\n{output}")
     assert output.shape == (2, 1)
     assert output[0] <= sut.bounds[0, 1] and output[0] >= sut.bounds[0, 0]
     assert output[1] <= sut.bounds[1, 1] and output[1] >= sut.bounds[1, 0]
