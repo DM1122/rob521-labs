@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
 # Standard Libraries
-from matplotlib.font_manager import json_dump
-from matplotlib.pyplot import close
 import numpy as np
-import scipy
 import yaml
-import pygame
-import time
 import matplotlib.image as mpimg
 from skimage.draw import disk
-from scipy.linalg import block_diag
 from pathlib import Path
-import sys
-import json
 from scipy.integrate import odeint
-from jaxtyping import Float, Int
+from jaxtyping import Float
 from beartype import beartype
 from typing import Optional, Tuple, List
 
