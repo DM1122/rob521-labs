@@ -4,7 +4,6 @@ from matplotlib.font_manager import json_dump
 from matplotlib.pyplot import close
 import numpy as np
 import scipy
-from typeguard import typechecked
 import yaml
 import pygame
 import time
@@ -15,8 +14,9 @@ from pathlib import Path
 import sys
 import json
 from scipy.integrate import odeint
+from jaxtyping import Float, Int
+from beartype import beartype
 from typing import Optional, Tuple, List
-from nptyping import NDArray, Shape, Float
 
 on_remote = False  # set this to true if running on the remote machine
 
@@ -116,8 +116,8 @@ class PathPlanner:
         return
 
     # Functions required for RRT
-    @typechecked
-    def sample_map_space(self) -> Array4[np.int32]:
+    @beartype
+    def sample_map_space(self) -> Float[np.ndarray, "2 1"]:
         """
         select and return the random point lies within the map boundary
         return an [x,y] coordinate to drive the robot towards
@@ -183,7 +183,7 @@ class PathPlanner:
             return min_idx
         assert len(self.nodes) != 0
 
-    @typechecked
+    @beartype
     def simulate_trajectory(
         self, node_i: np.ndarray, point_s: np.ndarray
     ) -> Optional[np.ndarray]:
@@ -215,7 +215,7 @@ class PathPlanner:
         else:
             return None
 
-    @typechecked
+    @beartype
     def robot_controller(
         self, node_i: np.ndarray, point_s: np.ndarray
     ) -> Tuple[float, float]:
@@ -260,7 +260,7 @@ class PathPlanner:
 
         return linear_vel, rotational_vel
 
-    @typechecked
+    @beartype
     def trajectory_rollout(self, vel: float, rot_vel: float) -> np.ndarray:
         """
         Compute the trajectory of a robot given linear and angular velocities.
@@ -299,7 +299,7 @@ class PathPlanner:
 
         return solution  # (N, 3)
 
-    @typechecked
+    @beartype
     def point_to_cell(self, point: np.ndarray) -> np.ndarray:
         """Converts a series of [x,y] points in the map to occupancy map cell indices.
 
@@ -343,7 +343,7 @@ class PathPlanner:
 
         return cell
 
-    @typechecked
+    @beartype
     def points_to_robot_circle(self, points: np.ndarray) -> List[np.ndarray]:
         """
         Converts a series of [x, y] coordinates to robot map footprints for collision detection.
@@ -396,7 +396,7 @@ class PathPlanner:
     # Note: If you have correctly completed all previous functions, then you should be able to create a working RRT function
 
     # RRT* specific functions
-    @typechecked
+    @beartype
     def ball_radius(self) -> float:
         """
         Calculate the radius of the ball used for finding close neighbors in the RRT* algorithm.
@@ -444,7 +444,7 @@ class PathPlanner:
             cost += np.sqrt(dx**2 + dy**2)
         return cost
 
-    @typechecked
+    @beartype
     def update_children(self, node_id: int):
         """
         Recursively updates the cost of child nodes based on the cost of their parent node.
@@ -471,7 +471,7 @@ class PathPlanner:
             # Recursively update the children of this child node
             self.update_children(child_id)
 
-    @typechecked
+    @beartype
     def is_trajectory_out_of_bounds(self, trajectory: np.ndarray) -> bool:
         """
         Checks if the trajectory is out of the bounds of the map.
@@ -492,7 +492,7 @@ class PathPlanner:
                 return True
         return False
 
-    @typechecked
+    @beartype
     def check_collision(self, trajectory: np.ndarray) -> bool:
         """
         Determines if a given trajectory results in a collision based on the occupancy map and the robot's footprint.
@@ -538,7 +538,7 @@ class PathPlanner:
                         return True  # Collision detected
         return False  # No collision detected
 
-    @typechecked
+    @beartype
     def is_goal_reached(self, node_point: np.ndarray) -> bool:
         """
         Check if the goal has been reached within the stopping distance.

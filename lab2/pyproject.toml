@@ -13,9 +13,10 @@ pygame-utils = "^0.3.0"
 matplotlib = "^3.8.2"
 scipy = "^1.12.0"
 scikit-image = "^0.22.0"
-typeguard = "^4.1.5"
 pydantic = "^2.6.1"
-nptyping = "^2.5.0"
+beartype = "^0.17.0"
+jaxtyping = "^0.2.25"
+jax = "^0.4.23"
 
 
 [tool.poetry.group.dev.dependencies]
