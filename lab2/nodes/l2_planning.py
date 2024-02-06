@@ -395,8 +395,19 @@ class PathPlanner:
     # Note: If you have correctly completed all previous functions, then you should be able to create a working RRT function
 
     # RRT* specific functions
-    def ball_radius(self):
-        # Close neighbor distance
+    @typechecked
+    def ball_radius(self) -> float:
+        """
+        Calculate the radius of the ball used for finding close neighbors in the RRT* algorithm.
+
+        This method computes the radius based on the current number of nodes in the tree (`self.nodes`)
+        and two parameters: `self.gamma_RRT` and `self.epsilon`. The radius is determined by the minimum
+        of two values: one derived from `gamma_RRT` and the logarithm of the cardinality of the nodes,
+        and the other being a fixed small value `epsilon`. It adjusts dynamically as the number of nodes in the tree changes.
+
+        Returns:
+            float: The calculated radius value for finding close neighbors.
+        """
         card_V = len(self.nodes)
         return min(
             self.gamma_RRT * (np.log(card_V) / card_V) ** (1.0 / 2.0), self.epsilon
@@ -605,9 +616,8 @@ class PathPlanner:
         return self.nodes
 
     def rrt_star_planning(self):
-        # This function performs RRT* for the given map and robot
         """
-        Currently performing a while loop, can be replaced with an iterative process to make use of
+        Performs RRT* for the given map and robot. Currently performing a while loop, can be replaced with an iterative process to make use of
         RRT*'s "anytime" capability.
         """
 
@@ -728,7 +738,7 @@ class PathPlanner:
         return path
 
 
-def main():
+if __name__ == "__main__":
     # Set map information
     if not on_remote:
         map_file_path = Path("../maps/willowgarageworld_05res.png")
@@ -750,7 +760,3 @@ def main():
 
     # Leftover test functions
     np.save("shortest_path.npy", node_path_metric)
-
-
-if __name__ == "__main__":
-    main()

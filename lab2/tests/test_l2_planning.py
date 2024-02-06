@@ -7,30 +7,42 @@ from pathlib import Path
 import time
 
 
-@pytest.fixture
-def path_planner_instance():
-    return PathPlanner(
+def test_init():
+    """Test constructor"""
+    sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [0]]),
+        goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
     )
+    print(sut)
+
+
+@pytest.mark.parametrize("expected_output", np.array([[2, 1]]))
+def test_sample_map_space(expected_output):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.sample_map_space()
+
+    assert type(output) == np.ndarray
+    assert output.shape == (2, 1)
+    assert output[0] <= sut.bounds[0, 1] and output[0] >= sut.bounds[0, 0]
+    assert output[1] <= sut.bounds[1, 1] and output[1] >= sut.bounds[1, 0]
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_output",
+    "input, expected_output",
     [
-        (
-            np.array([[-0.8, 0.85]]),
-            np.array([[598, 404]]),
-        ),  # should be around bottom left corner of first wall
-        (
-            np.array([[-0.85, 0.85]]),
-            np.array([[598, 403]]),
-        ),
+        (np.array([[1], [2]]), True),
+        (np.array([[3], [26]]), False),
     ],
 )
-def test_point_to_cell(test_input, expected_output):
+def test_check_if_duplicate(input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -38,65 +50,44 @@ def test_point_to_cell(test_input, expected_output):
         stopping_dist=0.5,
     )
 
-    output = sut.point_to_cell(test_input)
+    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
 
-    assert np.array_equal(output, expected_output)
+    output = sut.check_if_duplicate(input)
+    assert output == expected_output
 
 
 @pytest.mark.parametrize(
-    "test_input",
+    "input, expected_output",
     [
-        np.array(
-            [
-                [-0.8, 0.8],
-            ]
-        ),
+        (np.array([[1], [2.1]]), 1),
+        (np.array([[3], [25.5]]), 2),
+        (np.array([[9], [-1.9]]), 4),
     ],
 )
-def test_points_to_robot_circle(test_input):
+def test_closest_node(input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
     )
+    # INIT: self.nodes = [Node(np.zeros((3,1)), -1, 0)]
+    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
+    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
 
-    output = sut.points_to_robot_circle(test_input)
-    print(output)
+    # print(sut.nodes[0].point[1][0])
+    output = sut.closest_node(input)
+    assert output == expected_output
 
 
-def test_trajectory_rollout():
-    sut = PathPlanner(
-        map_file_path=Path("maps/willowgarageworld_05res.png"),
-        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
-        stopping_dist=0.5,
-    )
-
-    # Control inputs
-    vel = 1  # linear velocity (m/s)
-    rot_vel = 0.1  # angular velocity (rad/s)
-
-    output = sut.trajectory_rollout(vel, rot_vel)
-    print(output.shape)
-    print(output)
-    # Plot results
-    plt.figure()
-    plt.plot(output[:, 0], output[:, 1], "b-", label="Trajectory")
-    plt.quiver(
-        output[:, 0],
-        output[:, 1],
-        np.cos(output[:, 2]),
-        np.sin(output[:, 2]),
-        scale=20,
-        color="r",
-    )
-    plt.xlabel("x position")
-    plt.ylabel("y position")
-    plt.title("Robot Trajectory")
-    plt.legend()
-    plt.grid()
-    plt.show()
+@pytest.mark.skip(reason="Not implemented yet")
+def test_simulate_trajectory():
+    pass
 
 
 def test_robot_controller_max_vel(
@@ -191,8 +182,7 @@ def test_robot_controller_max_rot_minus_90(
     assert np.isclose(rot_vel, -sut.rot_vel_max)
 
 
-@pytest.mark.parametrize("expected_output", np.array([[2, 1]]))
-def test_sample_map_space(expected_output):
+def test_trajectory_rollout():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -200,22 +190,46 @@ def test_sample_map_space(expected_output):
         stopping_dist=0.5,
     )
 
-    output = sut.sample_map_space()
+    # Control inputs
+    vel = 1  # linear velocity (m/s)
+    rot_vel = 0.1  # angular velocity (rad/s)
 
-    assert type(output) == np.ndarray
-    assert output.shape == (2, 1)
-    assert output[0] <= sut.bounds[0, 1] and output[0] >= sut.bounds[0, 0]
-    assert output[1] <= sut.bounds[1, 1] and output[1] >= sut.bounds[1, 0]
+    output = sut.trajectory_rollout(vel, rot_vel)
+    print(output.shape)
+    print(output)
+    # Plot results
+    plt.figure()
+    plt.plot(output[:, 0], output[:, 1], "b-", label="Trajectory")
+    plt.quiver(
+        output[:, 0],
+        output[:, 1],
+        np.cos(output[:, 2]),
+        np.sin(output[:, 2]),
+        scale=20,
+        color="r",
+    )
+    plt.xlabel("x position")
+    plt.ylabel("y position")
+    plt.title("Robot Trajectory")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 @pytest.mark.parametrize(
-    "input, expected_output",
+    "test_input, expected_output",
     [
-        (np.array([[1], [2]]), True),
-        (np.array([[3], [26]]), False),
+        (
+            np.array([[-0.8, 0.85]]),
+            np.array([[598, 404]]),
+        ),  # should be around bottom left corner of first wall
+        (
+            np.array([[-0.85, 0.85]]),
+            np.array([[598, 403]]),
+        ),
     ],
 )
-def test_check_if_duplicate(input, expected_output):
+def test_point_to_cell(test_input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -223,42 +237,89 @@ def test_check_if_duplicate(input, expected_output):
         stopping_dist=0.5,
     )
 
-    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
+    output = sut.point_to_cell(test_input)
 
-    output = sut.check_if_duplicate(input)
-    assert output == expected_output
+    assert np.array_equal(output, expected_output)
 
 
 @pytest.mark.parametrize(
-    "input, expected_output",
+    "test_input",
     [
-        (np.array([[1], [2.1]]), 1),
-        (np.array([[3], [25.5]]), 2),
-        (np.array([[9], [-1.9]]), 4),
+        np.array(
+            [
+                [-0.8, 0.8],
+            ]
+        ),
     ],
 )
-def test_closest_node(input, expected_output):
+def test_points_to_robot_circle(test_input):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
     )
-    # INIT: self.nodes = [Node(np.zeros((3,1)), -1, 0)]
-    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
 
-    # print(sut.nodes[0].point[1][0])
-    output = sut.closest_node(input)
+    output = sut.points_to_robot_circle(test_input)
+    print(output)
+
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_ball_radius():
+    pass
+
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_connect_node_to_point():
+    pass
+
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_cost_to_come():
+    pass
+
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_update_children():
+    pass
+
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_is_trajectory_out_of_bounds():
+    pass
+
+
+@pytest.mark.parametrize(
+    "test_input, expected_output",
+    [
+        (np.array([[-0.8, 0.85, 0]]), True),  # bottom left corner of first room wall
+        (
+            np.array([[-0.85, 0.85, 0]]),
+            True,
+        ),  # one cell to the left of the bottom left corner of first room wall (still true bc robot radius)
+        (np.array([[0, 0, 0]]), False),  # origin
+    ],
+)
+def test_check_collision(test_input, expected_output: bool):
+    """Test for trajectory collision checking."""
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[15], [0]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.check_collision(test_input)
+
     assert output == expected_output
 
 
-def test_rrt_planning(path_planner_instance):
+@pytest.mark.skip(reason="Not implemented yet")
+def test_is_goal_reached():
+    pass
+
+
+def test_rrt_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -287,32 +348,17 @@ def test_rrt_planning(path_planner_instance):
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
-def test_rrt_star_planning(path_planner_instance):
-    sut = path_planner_instance
+def test_rrt_star_planning():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
     nodes = sut.rrt_star_planning()
     print(len(nodes))
 
 
-@pytest.mark.parametrize(
-    "test_input, expected_output",
-    [
-        (np.array([[-0.8, 0.85, 0]]), True),  # bottom left corner of first room wall
-        (
-            np.array([[-0.85, 0.85, 0]]),
-            True,
-        ),  # one cell to the left of the bottom left corner of first room wall (still true bc robot radius)
-        (np.array([[0, 0, 0]]), False),  # origin
-    ],
-)
-def test_check_collision(test_input, expected_output: bool):
-    """Test for trajectory collision checking."""
-    sut = PathPlanner(
-        map_file_path=Path("maps/willowgarageworld_05res.png"),
-        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[15], [0]]),
-        stopping_dist=0.5,
-    )
-
-    output = sut.check_collision(test_input)
-
-    assert output == expected_output
+@pytest.mark.skip(reason="Not implemented yet")
+def test_recover_path():
+    pass
