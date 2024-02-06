@@ -1,5 +1,5 @@
 from matplotlib import pyplot as plt
-from nodes.l2_planning import PathPlanner, RectBounds
+from nodes.l2_planning import PathPlanner, RectBounds, Node
 from nodes.l2_planning import Node
 import numpy as np
 import pytest
@@ -41,13 +41,14 @@ def test_sample_map_space(bounds):
 
 
 @pytest.mark.parametrize(
-    "input, expected_output",
+    "test_input, expected_output",
     [
-        (np.array([[1], [2]]), True),
-        (np.array([[3], [26]]), False),
+        (np.array([1.0, 2.0]), False),  # Point not in the nodes list
+        (np.array([3.0, 4.0]), True),  # Point already exists in the nodes list
+        (np.array([5.0, 6.0]), False),  # Another point not in the nodes list
     ],
 )
-def test_check_if_duplicate(input, expected_output):
+def test_check_if_duplicate(test_input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -55,12 +56,15 @@ def test_check_if_duplicate(input, expected_output):
         stopping_dist=0.5,
     )
 
-    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
+    sut.nodes = [
+        Node(
+            point=np.array([3.0, 4.0, 0.0]), parent_id=0, cost=0.0
+        ),  # Add a node with a point that should be detected as duplicate
+    ]
 
-    output = sut.check_if_duplicate(input)
+    output = sut.check_if_duplicate(test_input)
+    print(output)
+
     assert output == expected_output
 
 

@@ -38,43 +38,53 @@ def load_map_yaml(file_path: Path):
 
 class RectBounds(BaseModel):
     x: float = Field(
-        description="The x-coordinate of the top left corner of the rectangle."
+        description="The x-coordinate of the bottom left corner of the rectangle."
     )
     y: float = Field(
-        description="The y-coordinate of the top left corner of the rectangle."
+        description="The y-coordinate of the bottom left corner of the rectangle."
     )
-    width: PositiveFloat = Field(description="The width of the rectangle.")
-    height: PositiveFloat = Field(description="The height of the rectangle.")
-
-    @property
-    @beartype
-    def top_left(self) -> Float[np.ndarray, "2"]:
-        return np.array([self.x, self.y])
-
-    @property
-    @beartype
-    def top_right(self) -> Float[np.ndarray, "2"]:
-        return np.array([self.x + self.width, self.y])
+    width: PositiveFloat = Field(
+        description="The length of the rectangle in the x direction."
+    )
+    height: PositiveFloat = Field(
+        description="The length of the rectangle in the y direction."
+    )
 
     @property
     @beartype
     def bottom_left(self) -> Float[np.ndarray, "2"]:
-        return np.array([self.x, self.y + self.height])
+        return np.array([self.x, self.y])
 
     @property
     @beartype
     def bottom_right(self) -> Float[np.ndarray, "2"]:
+        return np.array([self.x + self.width, self.y])
+
+    @property
+    @beartype
+    def top_right(self) -> Float[np.ndarray, "2"]:
         return np.array([self.x + self.width, self.y + self.height])
+
+    @property
+    @beartype
+    def top_left(self) -> Float[np.ndarray, "2"]:
+        return np.array([self.x, self.y + self.height])
 
 
 # Node for building a graph
 class Node:
-    def __init__(self, point, parent_id, cost):
+    @beartype
+    def __init__(
+        self,
+        point: Float[np.ndarray, "3"],
+        parent_id: int,
+        cost: float,
+        children_ids: list = [],
+    ):
         self.point = point  # A 3 by 1 vector [x, y, theta]
         self.parent_id = parent_id  # The parent node id that leads to this node (There should only every be one parent in RRT)
         self.cost = cost  # The cost to come to this node
-        self.children_ids = []  # The children node ids of this node
-        return
+        self.children_ids = children_ids  # The children node ids of this node
 
 
 # Path Planner
@@ -116,7 +126,9 @@ class PathPlanner:
         self.num_substeps = 10
 
         # Planning storage
-        self.nodes = [Node(np.zeros((3, 1)), -1, 0)]
+        self.nodes: list[Node] = [
+            Node(point=np.array([0.0, 0.0, 0.0]), parent_id=-1, cost=0.0)
+        ]
 
         # RRT* Specific Parameters
         self.lebesgue_free = (
@@ -152,27 +164,19 @@ class PathPlanner:
         random_y = random.uniform(bounds.y, bounds.y + bounds.height)
 
         # Create a numpy array with the random point
-        random_point = np.array([random_x, random_y], dtype=float)
+        random_point = np.array([random_x, random_y])
 
         return random_point
 
-    def check_if_duplicate(self, point) -> bool:
+    @beartype
+    def check_if_duplicate(self, point: Float[np.ndarray, "2"]) -> bool:
         """
-        Check if point is a duplicate of an already existing node in the list
-        Class Node object are in self.nodes, and assumes that point is numpy array ((2,1))
-
-        # Assumed that the point is in shape of (2,1)
-
-        Input: A point to check if it already exist in the node list
-        Return: Boolean
+        Check if point is a duplicate of an already existing node's point in the list.
         """
-
-        # self.nodes = [Node(np.zeros((3, 1)), -1, 0)]
-        for cur_node in self.nodes:
-            if (
-                cur_node.point[0][0] == point[0][0]
-                and cur_node.point[1][0] == point[1][0]
-            ):
+        for node in self.nodes:
+            if np.allclose(
+                node.point[:2], point, atol=1e-5
+            ):  # Compare x and y coordinates within a tolerance
                 return True
         return False
 
