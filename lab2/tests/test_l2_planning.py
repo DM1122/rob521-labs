@@ -273,9 +273,16 @@ def test_points_to_robot_circle(test_input):
     print(output)
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_ball_radius():
-    pass
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.ball_radius()
+    print(output)
 
 
 @pytest.mark.skip(reason="Not implemented yet")
