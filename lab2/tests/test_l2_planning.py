@@ -527,4 +527,4 @@ def test_plot_graph():
     sut.nodes = [node0, node1, node2, node3, node4]
 
     output = sut.plot_graph()
-    time.sleep(30)
+    print(output)
