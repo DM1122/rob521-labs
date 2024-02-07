@@ -492,31 +492,24 @@ class PathPlanner:
         return total_cost
 
     @beartype
-    def update_children(self, node_id: int):
+    def update_children(self, node_id: int, delta_cost: float):
         """
-        Recursively updates the cost of child nodes based on the cost of their parent node.
+        Recursively updates the cost of child nodes based on the delta of the updated cost of their parent node.
 
-        This method iterates over all children of a specified node, identified by `node_id`, and
-        recalculates their cost based on the cost of the parent node and the cost of the trajectory
-        between the parent and each child. This updated cost is then assigned to each child node. The
-        method is applied recursively to update the cost of all descendant nodes in the tree.
+        This method calculates the delta as the difference between the new cost and the current cost of the parent node.
+        Upates the cost of the current node. It then iterates over all children of the specified node, recalculating their costs based on this delta.
+        The updated costs are then assigned to each child node.
 
         Args:
             node_id (int): The identifier of the parent node whose children's costs are to be updated.
+            new_cost (float): The new cost to be set for the parent node.
         """
         node = self.nodes[node_id]
-        parent_cost = node.cost
+        node.cost += delta_cost  # Update the cost of the current node
 
         for child_id in node.children_ids:
-            child_node = self.nodes[child_id]  # self.nodes: list[Node]
-
-            trajectory = self.connect_node_to_point(node, child_node)
-            trajectory_cost = self.cost_to_come(trajectory)
-
-            child_node.cost = parent_cost + trajectory_cost
-
             # Recursively update the children of this child node
-            self.update_children(child_id)
+            self.update_children(child_id, delta_cost)
 
     @beartype
     def is_trajectory_out_of_bounds(self, trajectory: Float[np.ndarray, "N 2"]) -> bool:
@@ -652,17 +645,16 @@ class PathPlanner:
             self.nodes.append(new_node)
             # self.window.add_point(new_node_point.flatten())
             self.window.add_point(
-                        map_frame_point=new_node_point[:2],
-                        radius=2,
-                        color=(0, 0, 255),
-                    )
+                map_frame_point=new_node_point[:2],
+                radius=2,
+                color=(0, 0, 255),
+            )
             new_node_id = len(self.nodes) - 1
             closest_node.children_ids.append(new_node_id)
 
             # Step 6: Check if goal is reached
             if self.is_goal_reached(new_node_point):
                 return self.nodes
-
 
     def rrt_star_planning(self):
         """

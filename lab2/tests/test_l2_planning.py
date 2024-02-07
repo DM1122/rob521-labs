@@ -381,9 +381,26 @@ def test_update_children():
     node4 = Node(np.array([3, 3, 0], dtype=float), parent_id=1, cost=40.0)
     sut.nodes = [node0, node1, node2, node3, node4]
 
-    output = sut.update_children(0)
+    # Set a new cost for the parent node (node0)
+    new_cost = 5.0
+    sut.update_children(0, new_cost)
+    for node in sut.nodes:
+        print(node.cost)
 
-    print(output)
+    # Assert the new costs of child nodes
+    assert sut.nodes[0].cost == 5.0  # Updated cost of node0
+    assert (
+        sut.nodes[1].cost == 15.0
+    )  # Updated cost of node1 (original cost 10.0 + delta 5.0)
+    assert (
+        sut.nodes[2].cost == 25.0
+    )  # Updated cost of node2 (original cost 20.0 + delta 5.0)
+    assert (
+        sut.nodes[3].cost == 35.0
+    )  # Updated cost of node3 (original cost 30.0 + delta 5.0)
+    assert (
+        sut.nodes[4].cost == 45.0
+    )  # Updated cost of node4 (original cost 40.0 + delta 5.0)
 
 
 @pytest.mark.parametrize(
@@ -492,7 +509,7 @@ def test_rrt_planning():
         while final_node.parent_id != -1:
             final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
             final_node = nodes[final_node.parent_id]
-        
+
         for i in final_trajectory:
             print(i)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
