@@ -648,7 +648,7 @@ class PathPlanner:
             # Step 6: Check if goal is reached
             if self.is_goal_reached(new_node_point):
                 return self.nodes
-        return self.nodes
+
 
     def rrt_star_planning(self):
         """
