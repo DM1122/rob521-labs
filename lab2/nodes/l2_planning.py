@@ -458,9 +458,8 @@ class PathPlanner:
             np.array | None: A Nx3 array representing the path from node_i to point_f if valid
         """
 
-        trajectory = self.simulate_trajectory(node_i.point, point_f)
-
-        return trajectory
+        end_point = [point_f[0], point_f[1], node_i.point[2]]
+        return np.vstack([node_i.point, end_point])
 
     @beartype
     def cost_to_come(self, trajectory: Float[np.ndarray, "N 3"]) -> float:
