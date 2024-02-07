@@ -629,23 +629,25 @@ class PathPlanner:
             trajectory_o = self.simulate_trajectory(
                 closest_node.point.reshape(3), point.reshape(2)
             )  # (100,3)
+            if trajectory_o is None:
+                continue
             print(trajectory_o[-1])
             # Check for collisions and add safe points to list of nodes.
-            if not self.check_collision(trajectory_o):
-                # If no collision, Add the new node
-                new_node_point = trajectory_o[-1]  # The last point of the trajectory
-                new_node_cost = (
-                    closest_node.cost + rrt_cost_come(trajectory_o)
-                )  # update cost-to-come in rrt planning but does not use it to rewire the edge
-                new_node = Node(new_node_point, closest_node_id, new_node_cost)
-                self.nodes.append(new_node)
-                self.window.add_point(point.flatten())
-                new_node_id = len(self.nodes) - 1
-                closest_node.children_ids.append(new_node_id)
+            # if not self.check_collision(trajectory_o):
+            # If no collision, Add the new node
+            new_node_point = trajectory_o[-1]  # The last point of the trajectory
+            new_node_cost = (
+                closest_node.cost + rrt_cost_come(trajectory_o)
+            )  # update cost-to-come in rrt planning but does not use it to rewire the edge
+            new_node = Node(new_node_point, closest_node_id, new_node_cost)
+            self.nodes.append(new_node)
+            self.window.add_point(point.flatten())
+            new_node_id = len(self.nodes) - 1
+            closest_node.children_ids.append(new_node_id)
 
-                # Step 6: Check if goal is reached
-                if self.is_goal_reached(new_node_point):
-                    return self.nodes
+            # Step 6: Check if goal is reached
+            if self.is_goal_reached(new_node_point):
+                return self.nodes
         return self.nodes
 
     def rrt_star_planning(self):
