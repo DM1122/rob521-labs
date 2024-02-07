@@ -2,6 +2,7 @@
 # Standard Libraries
 import numpy as np
 from pydantic import BaseModel, PositiveFloat
+from pygame import Rect
 import yaml
 import matplotlib.image as mpimg
 from skimage.draw import disk
@@ -100,17 +101,19 @@ class PathPlanner:
 
         # Get the metric bounds of the map
         # origin, the upper right point (real world) because it is multiplied by the resolution
-        self.bounds = np.zeros([2, 2])  # m
-        self.bounds[0, 0] = self.map_settings_dict["origin"][0]
-        self.bounds[1, 0] = self.map_settings_dict["origin"][1]
-        self.bounds[0, 1] = (
-            self.map_settings_dict["origin"][0]
-            + self.map_shape[1] * self.map_settings_dict["resolution"]
-        )
-        self.bounds[1, 1] = (
-            self.map_settings_dict["origin"][1]
-            + self.map_shape[0] * self.map_settings_dict["resolution"]
-        )
+        # self.bounds = np.zeros([2, 2])  # m
+        # self.bounds[0, 0] = self.map_settings_dict["origin"][0]
+        # self.bounds[1, 0] = self.map_settings_dict["origin"][1]
+        # self.bounds[0, 1] = (
+        #     self.map_settings_dict["origin"][0]
+        #     + self.map_shape[1] * self.map_settings_dict["resolution"]
+        # )
+        # self.bounds[1, 1] = (
+        #     self.map_settings_dict["origin"][1]
+        #     + self.map_shape[0] * self.map_settings_dict["resolution"]
+        # )
+
+        self.plan_bounds: RectBounds = RectBounds(x=-5, y=-47, width=55, height=60)
 
         # Robot information
         self.robot_radius = 0.22  # m
@@ -151,7 +154,14 @@ class PathPlanner:
             self.goal_point,
             self.stopping_dist,
         )
-        return
+
+        # draw planning bounds
+        self.window.add_line(
+            self.plan_bounds.bottom_left, self.plan_bounds.bottom_right
+        )
+        self.window.add_line(self.plan_bounds.bottom_right, self.plan_bounds.top_right)
+        self.window.add_line(self.plan_bounds.top_right, self.plan_bounds.top_left)
+        self.window.add_line(self.plan_bounds.top_left, self.plan_bounds.bottom_left)
 
     # Functions required for RRT
     @beartype
@@ -492,28 +502,30 @@ class PathPlanner:
             self.update_children(child_id)
 
     @beartype
-    def is_trajectory_out_of_bounds(self, trajectory: np.ndarray) -> bool:
+    def is_trajectory_out_of_bounds(self, trajectory: Float[np.ndarray, "N 2"]) -> bool:
         """
         Checks if the trajectory is out of the bounds of the map.
 
         Args:
-            trajectory (np.ndarray): A 2D array of shape (n, 3) where n is the number of points
-                                     in the trajectory, and each point is represented by (x, y) coordinates.
+            trajectory: Points in the trajectory
 
         Returns:
             bool: True if any point in the trajectory is out of bounds, False otherwise.
         """
         for point in trajectory:
-            x, y, _ = point
             if not (
-                self.bounds[0, 0] <= x <= self.bounds[0, 1]
-                and self.bounds[1, 0] <= y <= self.bounds[1, 1]
+                self.plan_bounds.x
+                <= point[0]
+                <= self.plan_bounds.x + self.plan_bounds.width
+                and self.plan_bounds.y
+                <= point[1]
+                <= self.plan_bounds.y + self.plan_bounds.height
             ):
                 return True
         return False
 
     @beartype
-    def check_collision(self, trajectory: np.ndarray) -> bool:
+    def check_collision(self, trajectory: Float[np.ndarray, "N 2"]) -> bool:
         """
         Determines if a given trajectory results in a collision based on the occupancy map and the robot's footprint.
 
@@ -528,13 +540,6 @@ class PathPlanner:
             bool: True if a collision is detected within the robot's footprint at any
                 point along the trajectory. False otherwise.
         """
-
-        # Validate trajectory dimensions
-        if trajectory.ndim != 2 or trajectory.shape[1] != 3:
-            raise ValueError(
-                f"Trajectory must be a 2-dimensional array with shape Nx3, received: {trajectory.shape}"
-            )
-
         bounds_check = self.is_trajectory_out_of_bounds(trajectory)
         if bounds_check:
             return True  # out of bounds

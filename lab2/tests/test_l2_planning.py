@@ -323,20 +323,41 @@ def test_update_children():
     pass
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_is_trajectory_out_of_bounds():
-    pass
+@pytest.mark.parametrize(
+    "test_input, expected_output",  # assumes self.plan_bounds =  RectBounds(x=-5, y=-47, width=55, height=60)
+    [
+        (np.array([[0, 0], [5, -5]], dtype=float), False),
+        (np.array([[10, -12]], dtype=float), False),
+        (np.array([[5, -5]], dtype=float), False),
+        (np.array([[0, 0], [-30, 0]], dtype=float), True),
+        (np.array([[-30, 50]], dtype=float), True),
+    ],
+)
+def test_is_trajectory_out_of_bounds(test_input, expected_output):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[15], [0]]),
+        stopping_dist=0.5,
+    )
+
+    print(sut.plan_bounds)
+
+    output = sut.is_trajectory_out_of_bounds(test_input)
+    print(output)
+
+    assert output == expected_output
 
 
 @pytest.mark.parametrize(
     "test_input, expected_output",
     [
-        (np.array([[-0.8, 0.85, 0]]), True),  # bottom left corner of first room wall
+        (np.array([[-0.8, 0.85]]), True),  # bottom left corner of first room wall
         (
-            np.array([[-0.85, 0.85, 0]]),
+            np.array([[-0.85, 0.85]]),
             True,
         ),  # one cell to the left of the bottom left corner of first room wall (still true bc robot radius)
-        (np.array([[0, 0, 0]]), False),  # origin
+        (np.array([[0.0, 0.0]]), False),  # origin
     ],
 )
 def test_check_collision(test_input, expected_output: bool):
