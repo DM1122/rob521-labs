@@ -8,26 +8,6 @@ from pathlib import Path
 from jaxtyping import Float
 
 
-def plot_trajectory(trajectory: Float[np.ndarray, "N 3"]):
-    """Plots a provided trajectory on a quiver plot"""
-    plt.figure()
-    plt.plot(trajectory[:, 0], trajectory[:, 1], "b-", label="Trajectory")
-    plt.quiver(
-        trajectory[:, 0],
-        trajectory[:, 1],
-        np.cos(np.radians(trajectory[:, 2])),
-        np.sin(np.radians(trajectory[:, 2])),
-        scale=20,
-        color="r",
-    )
-    plt.xlabel("x position")
-    plt.ylabel("y position")
-    plt.title("Robot Trajectory")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-
 def test_init():
     """Test constructor"""
     sut = PathPlanner(
@@ -119,8 +99,7 @@ def test_closest_node(test_input, expected_output):
     assert output == expected_output
 
 
-@pytest.mark.skip(reason="Not Implemented")
-def test_simulate_trajectory():
+def test_simulate_trajectory():  # TODO: determine if this function needs to drive to completion
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -132,6 +111,9 @@ def test_simulate_trajectory():
         node_i=np.array([0, 0, 0], dtype=float), point_s=np.array([1, 0], dtype=float)
     )
     print(output)
+
+    for point in output:
+        sut.window.add_se2_pose(point)
 
 
 def test_robot_controller_max_vel(
@@ -244,12 +226,14 @@ def test_trajectory_rollout():
     )
 
     # Control inputs
-    vel = 1.0  # linear velocity (m/s)
-    rot_vel = 0.1  # angular velocity (rad/s)
+    vel = 0.5  # linear velocity (m/s)
+    rot_vel = 0.2  # angular velocity (rad/s)
 
     output = sut.trajectory_rollout(vel, rot_vel)
     print(output)
-    plot_trajectory(output)
+
+    for point in output:
+        sut.window.add_se2_pose(point)
 
 
 @pytest.mark.parametrize(
@@ -312,7 +296,7 @@ def test_ball_radius():
     print(output)
 
 
-def test_connect_node_to_point():
+def test_connect_node_to_point():  # TODO: currently only propagates a limited number of timesteps. Should loop until it arrives at point?
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -321,11 +305,13 @@ def test_connect_node_to_point():
     )
 
     output = sut.connect_node_to_point(
-        Node(point=np.array([0, 0, 1], dtype=float), parent_id=0, cost=0.0),
-        np.array([1, 0], dtype=float),
+        Node(point=np.array([0, 0, 0], dtype=float), parent_id=0, cost=0.0),
+        np.array([10, 10], dtype=float),
     )
     print(output)
-    plot_trajectory(output)
+
+    for point in output:
+        sut.window.add_se2_pose(point)
 
 
 @pytest.mark.parametrize(
@@ -440,9 +426,25 @@ def test_check_collision(test_input, expected_output: bool):
     assert output == expected_output
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_is_goal_reached():
-    pass
+@pytest.mark.parametrize(
+    "node_point, expected",
+    [
+        (np.array([10.0, -5, 0]), True),  # Node point at the goal
+        (np.array([10.3, -4.7, 0]), True),  # Node point within stopping distance
+        (np.array([11.0, -6, 0]), False),  # Node point outside stopping distance
+    ],
+)
+def test_is_goal_reached(node_point, expected):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [-5]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.is_goal_reached(node_point)
+
+    assert output == expected
 
 
 @pytest.mark.skip(reason="Not implemented yet")

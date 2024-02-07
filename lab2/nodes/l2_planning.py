@@ -319,7 +319,7 @@ class PathPlanner:
         y_0 = 0
         theta_0 = 0
 
-        t_proj = self.timestep  # numer of seconds to project into the future
+        t_proj = self.timestep  # number of seconds to project into the future
         t = np.linspace(0, t_proj, self.num_substeps)
 
         # Solve ODE
@@ -572,7 +572,7 @@ class PathPlanner:
         return False  # No collision detected
 
     @beartype
-    def is_goal_reached(self, node_point: np.ndarray) -> bool:
+    def is_goal_reached(self, node_point: Float[np.ndarray, "3"]) -> bool:
         """
         Check if the goal has been reached within the stopping distance.
 
@@ -580,7 +580,7 @@ class PathPlanner:
         node_point (np.ndarray): The current node point as a numpy array [x, y, theta].
 
         Returns:
-        bool: True if the goal is reached, False otherwise.
+            bool: True if the goal is reached, False otherwise.
         """
         # Extract the x, y coordinates of the node point and the goal point
         node_x, node_y = node_point[0], node_point[1]
