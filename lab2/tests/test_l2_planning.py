@@ -309,7 +309,7 @@ def test_connect_node_to_point(start_point, end_point):
     )
 
     output = sut.connect_node_to_point(
-        Node(point=start_point, parent_id=0, cost=0.0),
+        Node(point=start_point, parent_id=-1, cost=0.0),
         end_point,
     )
     print(output)

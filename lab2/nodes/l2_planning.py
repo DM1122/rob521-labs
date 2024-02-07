@@ -459,7 +459,7 @@ class PathPlanner:
         """
         curr_point = node_i.point
         destination = point_f
-        traj = []
+        traj = curr_point
         while True:
             curr_traj = self.simulate_trajectory(curr_point, destination)
             if curr_traj is None:
