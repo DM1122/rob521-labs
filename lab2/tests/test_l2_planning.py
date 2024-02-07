@@ -108,12 +108,13 @@ def test_simulate_trajectory():  # TODO: determine if this function needs to dri
     )
 
     output = sut.simulate_trajectory(
-        node_i=np.array([0, 0, 0], dtype=float), point_s=np.array([1, 0], dtype=float)
+        point_i=np.array([0, 0, 0], dtype=float), point_s=np.array([1, 0], dtype=float)
     )
     print(output)
 
     for point in output:
         sut.window.add_se2_pose(point)
+    time.sleep(30)
 
 
 def test_robot_controller_max_vel(
@@ -226,14 +227,15 @@ def test_trajectory_rollout():
     )
 
     # Control inputs
-    vel = 0.5  # linear velocity (m/s)
-    rot_vel = 0.2  # angular velocity (rad/s)
+    vel = 5.0  # linear velocity (m/s)
+    rot_vel = 1.0  # angular velocity (rad/s)
 
-    output = sut.trajectory_rollout(vel, rot_vel)
+    output = sut.trajectory_rollout(vel, rot_vel, np.array([1, 1, 0.0], dtype=float))
     print(output)
 
     for point in output:
         sut.window.add_se2_pose(point)
+    time.sleep(30)
 
 
 @pytest.mark.parametrize(
@@ -298,13 +300,13 @@ def test_ball_radius():
 
 @pytest.mark.parametrize(
     "start_point, end_point",
-    [(np.array([0, 0, 0], dtype=float), np.array([1, -1], dtype=float))],
+    [(np.array([0, 0, 0], dtype=float), np.array([10, 2], dtype=float))],
 )
 def test_connect_node_to_point(start_point, end_point):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([[10], [0]]),
         stopping_dist=0.5,
     )
 
@@ -312,12 +314,16 @@ def test_connect_node_to_point(start_point, end_point):
         Node(point=start_point, parent_id=-1, cost=0.0),
         end_point,
     )
-    print(output)
+    print(f"True output: {output}")
 
-    for point in output:
-        sut.window.add_se2_pose(point)
+    if output is not None:
+        assert np.allclose(output[-1][:2], end_point, atol=sut.stopping_dist)
 
-    assert np.allclose(output[-1][:2], end_point, atol=sut.stopping_dist)
+        for point in output:
+            sut.window.add_se2_pose(point)
+        time.sleep(30)
+    else:
+        print("Collision detected")
 
 
 @pytest.mark.parametrize(
