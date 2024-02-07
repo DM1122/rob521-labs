@@ -466,9 +466,9 @@ class PathPlanner:
                 return None
             traj_end = curr_traj[-1]
             traj = np.vstack((traj, curr_traj))
-            if np.linalg.norm(traj_end, destination) < self.stopping_dist:
-                reached_end = True
+            if np.linalg.norm(traj_end[:2], destination) < self.stopping_dist:
                 break
+            curr_point = traj_end
         return traj
     
     @beartype
