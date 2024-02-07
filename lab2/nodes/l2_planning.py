@@ -762,14 +762,66 @@ class PathPlanner:
             if self.is_goal_reached(self.nodes[-1].point):
                 return self.nodes
 
-    def recover_path(self, node_id=-1):
+    @beartype
+    def recover_path(self, node_id=-1) -> List[Float[np.ndarray, "3"]]:
+        """
+        Recovers and returns the path from the root node to a specified node.
+
+        This method traverses from the given node (defaulting to the last node if no node_id is provided)
+        up to the root node, collecting the points of each visited node. The path is then reversed to
+        display the correct order from root to the specified node.
+
+        Args:
+            node_id: The ID of the node to start the path recovery from.
+
+        Returns:
+            List: A list of points representing the path from the root node to the specified node.
+        """
         path = [self.nodes[node_id].point]
         current_node_id = self.nodes[node_id].parent_id
         while current_node_id > -1:
             path.append(self.nodes[current_node_id].point)
             current_node_id = self.nodes[current_node_id].parent_id
         path.reverse()
+
         return path
+
+    @beartype
+    def plot_graph(self):
+        self.window.refresh_display()
+        # Create a mapping from node IDs to nodes for easy lookup
+        # node_dict = {i: node for i, node in enumerate(self.nodes)}
+
+        for i, node in enumerate(self.nodes):
+            # Draw node point
+            self.window.add_point(node.point[0:2], radius=2, color=(0, 0, 255))
+
+            if node.children_ids:
+                for child_id in node.children_ids:
+                    print(f"Drawing connection to child {child_id}")
+                    self.window.add_point(
+                        map_frame_point=(
+                            node.point[0:2] + self.nodes[child_id].point[0:2]
+                        )
+                        / 2,
+                        radius=2,
+                        color=(0, 0, 255),
+                    )
+
+                    # self.window.add_line(
+                    #     node.point[0:2],
+                    #     self.nodes[child_id].point[0:2],
+                    #     width=1,
+                    #     color=(0, 0, 255),
+                    # )
+
+            # # Draw node line to the parent node, if it exists
+            # if node.parent_id is not None and node.parent_id in node_dict:
+            #     print(f"Drawing line for node {i}")
+            #     parent_node = node_dict[node.parent_id]
+            #     self.window.add_line(
+            #         parent_node.point[0:2], node.point[0:2], width=1, color=(0, 0, 255)
+            #     )
 
 
 if __name__ == "__main__":

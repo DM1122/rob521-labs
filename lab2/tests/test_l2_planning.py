@@ -361,13 +361,15 @@ def test_update_children():
         np.array([0, 0, 0], dtype=float), parent_id=-1, cost=0.0, children_ids=[1, 2]
     )
     node1 = Node(
-        np.array([1, 1, 0], dtype=float), parent_id=0, cost=10.0, children_ids=[3]
+        np.array([1, 1, 0], dtype=float), parent_id=0, cost=10.0, children_ids=[3, 4]
     )
     node2 = Node(
-        np.array([2, 2, 0], dtype=float), parent_id=0, cost=20.0, children_ids=[4]
+        np.array([1, -1, 0], dtype=float),
+        parent_id=0,
+        cost=20.0,
     )
-    node3 = Node(np.array([3, 3, 0], dtype=float), parent_id=1, cost=30.0)
-    node4 = Node(np.array([4, 4, 0], dtype=float), parent_id=2, cost=40.0)
+    node3 = Node(np.array([3, 2, 0], dtype=float), parent_id=1, cost=30.0)
+    node4 = Node(np.array([3, 3, 0], dtype=float), parent_id=1, cost=40.0)
     sut.nodes = [node0, node1, node2, node3, node4]
 
     output = sut.update_children(0)
@@ -447,7 +449,6 @@ def test_is_goal_reached(node_point, expected):
     assert output == expected
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_rrt_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
@@ -455,29 +456,28 @@ def test_rrt_planning():
         goal_point=np.array([[10], [0]]),
         stopping_dist=0.5,
     )
-    # nodes = sut.rrt_planning()
+    nodes = sut.rrt_planning()
 
-    # print(nodes[0].point.shape, nodes[1].shape)
-    # print(nodes[0].point, nodes[1])
+    print(nodes[0].point.shape, nodes[1].shape)
+    print(nodes[0].point, nodes[1])
 
-    # for state in nodes:
-    #     print(state[:2].shape)
-    #     print(state[:2].ndim)
-    #     break
-    # print(nodes.shape)
-    # for node in nodes:
-    #     print(node.point)
+    for state in nodes:
+        print(state[:2].shape)
+        print(state[:2].ndim)
+        break
+    print(nodes.shape)
+    for node in nodes:
+        print(node.point)
 
-    # print(len(nodes))
-    # for node in nodes:
-    #     print(node.point)
+    print(len(nodes))
+    for node in nodes:
+        print(node.point)
 
-    # print(len(nodes))
-    # assert isinstance(nodes, list)  # Check if 'nodes' is a list
-    # assert len(nodes) > 0  # Check if 'nodes' has at least one element
+    print(len(nodes))
+    assert isinstance(nodes, list)  # Check if 'nodes' is a list
+    assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
@@ -489,6 +489,42 @@ def test_rrt_star_planning():
     print(len(nodes))
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_recover_path():
-    pass
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [0]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.recover_path()
+
+    print(output)
+
+
+def test_plot_graph():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [-5]]),
+        stopping_dist=0.5,
+    )
+
+    # Creating sample nodes
+    node0 = Node(
+        np.array([0, 0, 0], dtype=float), parent_id=-1, cost=0.0, children_ids=[1, 2]
+    )
+    node1 = Node(
+        np.array([1, 1, 0], dtype=float), parent_id=0, cost=10.0, children_ids=[3, 4]
+    )
+    node2 = Node(
+        np.array([1, -1, 0], dtype=float),
+        parent_id=0,
+        cost=20.0,
+    )
+    node3 = Node(np.array([3, 2, 0], dtype=float), parent_id=1, cost=30.0)
+    node4 = Node(np.array([3, 3, 0], dtype=float), parent_id=1, cost=40.0)
+    sut.nodes = [node0, node1, node2, node3, node4]
+
+    output = sut.plot_graph()
+    time.sleep(30)

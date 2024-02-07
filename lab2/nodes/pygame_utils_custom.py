@@ -1,3 +1,5 @@
+from beartype import beartype
+from jaxtyping import Float, Int
 import numpy as np
 import pygame
 from pathlib import Path
@@ -29,11 +31,14 @@ class PygameWindow:
         self.map_settings_dict = map_settings_dict
         self.origin = np.array(map_settings_dict["origin"])
 
-        map_img = pygame.image.load(map_file_path)
-        map_img = pygame.transform.scale(map_img, self.size)
+        self.map_img = pygame.image.load(map_file_path)
+        self.map_img = pygame.transform.scale(self.map_img, self.size)
+
+        self.stopping_dist = stopping_dist
+        self.goal_point = goal_point
 
         self.screen = pygame.display.set_mode(self.size)
-        self.screen.blit(map_img, (0, 0))
+
         pygame.display.flip()
 
         full_map_height = map_settings_dict["resolution"] * real_map_size_pixels[1]
@@ -43,14 +48,30 @@ class PygameWindow:
             / self.meters_per_pixel
         )
 
+        self.refresh_display()
+
+    def refresh_display(self):
+        # map
+        self.screen.blit(self.map_img, (0, 0))
+
+        # robot pose
         self.add_se2_pose([0, 0, 0], length=5, color=COLORS["r"])
+
+        # goal point
         self.add_point(
-            goal_point.flatten(),
-            radius=stopping_dist / self.meters_per_pixel,
+            self.goal_point.flatten(),
+            radius=self.stopping_dist / self.meters_per_pixel,
             color=COLORS["g"],
         )
 
-    def add_point(self, map_frame_point, radius=1, width=0, color=COLORS["k"]):
+    @beartype
+    def add_point(
+        self,
+        map_frame_point: Float[np.ndarray, "2"] | Int[np.ndarray, "2"],
+        radius=1,
+        width=0,
+        color=COLORS["k"],
+    ):
         map_frame_point[1] = -map_frame_point[1]  # for top left origin
         point_vec = self.point_to_vec(
             np.array(map_frame_point) / self.meters_per_pixel + self.origin_pixels
@@ -84,7 +105,13 @@ class PygameWindow:
         pygame.draw.polygon(self.screen, color, [c_vec, p1_vec, p2_vec], width=width)
         pygame.display.update()
 
-    def add_line(self, map_frame_point1, map_frame_point2, width=1, color=COLORS["k"]):
+    def add_line(
+        self,
+        map_frame_point1: Float[np.ndarray, "2"] | Int[np.ndarray, "2"],
+        map_frame_point2: Float[np.ndarray, "2"] | Int[np.ndarray, "2"],
+        width=1,
+        color=COLORS["k"],
+    ):
         map_frame_point1[1] = -map_frame_point1[1]  # for top left origin
         p1 = self.point_to_vec(
             np.array(map_frame_point1) / self.meters_per_pixel + self.origin_pixels
