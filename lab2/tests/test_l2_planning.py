@@ -1,3 +1,4 @@
+import time
 from matplotlib import pyplot as plt
 from nodes.l2_planning import PathPlanner, RectBounds, Node
 from nodes.l2_planning import Node
@@ -97,18 +98,29 @@ def test_closest_node(test_input, expected_output):
     assert output == expected_output
 
 
-@pytest.mark.skip(reason="Not implemented yet")
+@pytest.mark.skip(reason="Not Implemented")
 def test_simulate_trajectory():
-    pass
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.simulate_trajectory(
+        node_i=np.array([0, 0, 0], dtype=float), point_s=np.array([1, 0], dtype=float)
+    )
+    print(output)
 
 
 def test_robot_controller_max_vel(
-    initial_point=np.array([0, 0, 0]),
+    initial_point=np.array([0, 0, 0], dtype=float),
     final_point=np.array(
         [
             10000,
             0,
-        ]
+        ],
+        dtype=float,
     ),
 ):
     """Test to ensure the robot is commanded to its highest velocity and no rotation
@@ -122,17 +134,19 @@ def test_robot_controller_max_vel(
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
     print(vel, rot_vel)
+
     assert vel == sut.vel_max
     assert rot_vel == 0
 
 
 def test_robot_controller_max_rot_180(
-    initial_point=np.array([0, 0, 0]),
+    initial_point=np.array([0, 0, 0], dtype=float),
     final_point=np.array(
         [
             -1,
             0,
-        ]
+        ],
+        dtype=float,
     ),
 ):
     """Test to ensure the robot is commanded to its highest angular velocity when the target
@@ -145,16 +159,19 @@ def test_robot_controller_max_rot_180(
     )
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
+    print(vel, rot_vel)
+
     assert rot_vel == -sut.rot_vel_max
 
 
 def test_robot_controller_max_rot_90(
-    initial_point=np.array([0, 0, 0]),
+    initial_point=np.array([0, 0, 0], dtype=float),
     final_point=np.array(
         [
             0,
             1,
-        ]
+        ],
+        dtype=float,
     ),
 ):
     """Test to ensure the robot is commanded to its highest angular velocity when the target
@@ -167,17 +184,19 @@ def test_robot_controller_max_rot_90(
     )
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
+    print(vel, rot_vel)
 
     assert np.isclose(rot_vel, sut.rot_vel_max)
 
 
 def test_robot_controller_max_rot_minus_90(
-    initial_point=np.array([0, 0, 0]),
+    initial_point=np.array([0, 0, 0], dtype=float),
     final_point=np.array(
         [
             0,
             -1,
-        ]
+        ],
+        dtype=float,
     ),
 ):
     """Test to ensure the robot is commanded to its highest angular velocity when the target
@@ -190,6 +209,7 @@ def test_robot_controller_max_rot_minus_90(
     )
 
     vel, rot_vel = sut.robot_controller(initial_point, final_point)
+    print(vel, rot_vel)
 
     assert np.isclose(rot_vel, -sut.rot_vel_max)
 
@@ -203,7 +223,7 @@ def test_trajectory_rollout():
     )
 
     # Control inputs
-    vel = 1  # linear velocity (m/s)
+    vel = 1.0  # linear velocity (m/s)
     rot_vel = 0.1  # angular velocity (rad/s)
 
     output = sut.trajectory_rollout(vel, rot_vel)

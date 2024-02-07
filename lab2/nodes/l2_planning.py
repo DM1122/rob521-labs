@@ -203,8 +203,8 @@ class PathPlanner:
 
     @beartype
     def simulate_trajectory(
-        self, node_i: np.ndarray, point_s: np.ndarray
-    ) -> Optional[np.ndarray]:
+        self, node_i: Float[np.ndarray, "3"], point_s: Float[np.ndarray, "2"]
+    ) -> Optional[Float[np.ndarray, "N 3"]]:
         """Simulates the non-holonomic motion of a robot towards a target point.
 
         This function drives the robot from its current state (node_i) towards a
@@ -213,10 +213,10 @@ class PathPlanner:
         trajectory using these velocities.
 
         Args:
-            node_i (numpy.array): A 3x1 vector representing the current state of the
+            node_i: A 3x1 vector representing the current state of the
                                 robot. It includes the robot's x and y
                                 coordinates and its orientation theta, i.e., [x; y; theta].
-            point_s (numpy.array): A 2x1 vector representing the target point in Cartesian
+            point_s: A 2x1 vector representing the target point in Cartesian
                                 coordinates, i.e., [x; y].
 
         Returns:
@@ -235,7 +235,7 @@ class PathPlanner:
 
     @beartype
     def robot_controller(
-        self, node_i: np.ndarray, point_s: np.ndarray
+        self, node_i: Float[np.ndarray, "3"], point_s: Float[np.ndarray, "2"]
     ) -> Tuple[float, float]:
         """
         This controller determines the velocities that will nominally move the robot from node i to node s.
@@ -279,7 +279,9 @@ class PathPlanner:
         return linear_vel, rotational_vel
 
     @beartype
-    def trajectory_rollout(self, vel: float, rot_vel: float) -> np.ndarray:
+    def trajectory_rollout(
+        self, vel: float, rot_vel: float
+    ) -> Float[np.ndarray, "N 3"]:
         """
         Compute the trajectory of a robot given linear and angular velocities.
 
@@ -315,7 +317,7 @@ class PathPlanner:
             func=system_dynamics, y0=[x_0, y_0, theta_0], t=t, args=(vel, rot_vel)
         )
 
-        return solution  # (N, 3)
+        return solution
 
     @beartype
     def point_to_cell(self, point: np.ndarray) -> np.ndarray:
