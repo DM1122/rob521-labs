@@ -459,14 +459,14 @@ class PathPlanner:
         """
         curr_point = node_i.point
         destination = point_f
-        traj = []
+        traj = curr_point
         while True:
             curr_traj = self.simulate_trajectory(curr_point, destination)
             if curr_traj is None:
                 return None
             traj_end = curr_traj[-1]
             traj = np.vstack((traj, curr_traj))
-            if np.linalg.norm(traj_end[:2], destination) < self.stopping_dist:
+            if np.linalg.norm(traj_end[:2] - destination) < self.stopping_dist:
                 break
             curr_point = traj_end
         return traj

@@ -296,7 +296,11 @@ def test_ball_radius():
     print(output)
 
 
-def test_connect_node_to_point():  # TODO: currently only propagates a limited number of timesteps. Should loop until it arrives at point?
+@pytest.mark.parametrize(
+    "start_point, end_point",
+    [(np.array([0, 0, 0], dtype=float), np.array([1, -1], dtype=float))],
+)
+def test_connect_node_to_point(start_point, end_point):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
@@ -305,13 +309,15 @@ def test_connect_node_to_point():  # TODO: currently only propagates a limited n
     )
 
     output = sut.connect_node_to_point(
-        Node(point=np.array([0, 0, 0], dtype=float), parent_id=0, cost=0.0),
-        np.array([10, 10], dtype=float),
+        Node(point=start_point, parent_id=-1, cost=0.0),
+        end_point,
     )
     print(output)
 
     for point in output:
         sut.window.add_se2_pose(point)
+
+    assert np.allclose(output[-1][:2], end_point, atol=sut.stopping_dist)
 
 
 @pytest.mark.parametrize(
