@@ -458,22 +458,25 @@ def test_rrt_planning():
     )
     nodes = sut.rrt_planning()
 
-    print(nodes[0].point.shape, nodes[1].shape)
-    print(nodes[0].point, nodes[1])
+    # print(nodes[0].point.shape, nodes[1].shape)
+    # print(nodes[0].point, nodes[1])
+
+    # for state in nodes:
+    #     print(state.point[:2].shape)
+    #     print(state.point[:2].ndim)
+    #     break
+    # print(nodes.shape)
+    # for node in nodes:
+    #     print(node.point)
+
+    # print(len(nodes))
+    # for node in nodes:
+    #     print(node.point)
+
+    # print(len(nodes))
 
     for state in nodes:
-        print(state[:2].shape)
-        print(state[:2].ndim)
-        break
-    print(nodes.shape)
-    for node in nodes:
-        print(node.point)
-
-    print(len(nodes))
-    for node in nodes:
-        print(node.point)
-
-    print(len(nodes))
+        print(state.point)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 

@@ -630,7 +630,7 @@ class PathPlanner:
 
         n_iteration = 1000
         while True:
-            point = self.sample_map_space()
+            point = self.sample_map_space(self.plan_bounds)
 
             closest_node_id = self.closest_node(point)
             closest_node = self.nodes[closest_node_id]  # (3, 1)
