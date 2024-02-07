@@ -69,28 +69,31 @@ def test_check_if_duplicate(test_input, expected_output):
 
 
 @pytest.mark.parametrize(
-    "input, expected_output",
+    "test_input, expected_output",
     [
-        (np.array([[1], [2.1]]), 1),
-        (np.array([[3], [25.5]]), 2),
-        (np.array([[9], [-1.9]]), 4),
+        (np.array([1, 1]), 0),  # Closest to the first node
+        (np.array([6, 6]), 1),  # Closest to the second node
+        (np.array([9, 8]), 2),  # Closest to the third node
     ],
 )
-def test_closest_node(input, expected_output):
+def test_closest_node(test_input, expected_output):
+    # Setup the PathPlanner
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
     )
-    # INIT: self.nodes = [Node(np.zeros((3,1)), -1, 0)]
-    sut.nodes.append(Node(np.array([[1], [2], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[3], [25], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[24], [30], [0]]), -1, 0))
-    sut.nodes.append(Node(np.array([[9], [-2], [0]]), -1, 0))
 
-    # print(sut.nodes[0].point[1][0])
-    output = sut.closest_node(input)
+    # Add predefined nodes to the PathPlanner's node list
+    sut.nodes = [
+        Node(point=np.array([0, 0, 0], dtype=float), parent_id=0, cost=0.0),
+        Node(point=np.array([5, 5, 0], dtype=float), parent_id=0, cost=0.0),
+        Node(point=np.array([10, 10, 0], dtype=float), parent_id=0, cost=0.0),
+    ]
+
+    output = sut.closest_node(test_input)
+
     assert output == expected_output
 
 

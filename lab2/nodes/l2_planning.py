@@ -180,27 +180,26 @@ class PathPlanner:
                 return True
         return False
 
-    def closest_node(self, point):
+    def closest_node(self, point: Float[np.ndarray, "2"]) -> int:
         """
-        Implement a method to get the closest node to a sampled point.
-        Assumed that the point in shape of (2,1)
+        Finds the index of the node that is closest to the given point.
 
-        Input: A current point needs to find the closest node
-        Return: the index of the closest node
+        This method calculates the Euclidean distance from the given point to the points of all nodes in the list `self.nodes`. It then returns the index of the node with the minimum distance.
+
+        Args:
+            point: A 2D NumPy array representing the point for which the closest node is to be found. The array should contain two elements representing the x and y coordinates.
+
+        Returns:
+            int: The index of the closest node in the `self.nodes` list.
         """
-        min_distance = 100000000
-        min_idx = -1
-        if len(self.nodes) >= 1:
-            for idx, cur_node in enumerate(self.nodes):
-                cur_distance = np.sqrt(
-                    (cur_node.point[0] - point[0][0]) ** 2
-                    + (cur_node.point[1] - point[1][0]) ** 2
-                )
-                min_distance = min(cur_distance, min_distance)
-                if min_distance == cur_distance:
-                    min_idx = idx
-            return min_idx
-        assert len(self.nodes) != 0
+        # Extract points from nodes and form a 2D array
+        node_points = np.array([node.point[:2] for node in self.nodes])
+
+        distances = np.linalg.norm(node_points - point, axis=1)
+
+        closest_node_index = np.argmin(distances)
+
+        return int(closest_node_index)
 
     @beartype
     def simulate_trajectory(
