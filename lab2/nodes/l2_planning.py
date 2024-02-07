@@ -213,7 +213,7 @@ class PathPlanner:
 
     @beartype
     def simulate_trajectory(
-        self, node_i: Float[np.ndarray, "3"], point_s: Float[np.ndarray, "2"]
+        self, point_i: Float[np.ndarray, "3"], point_s: Float[np.ndarray, "2"]
     ) -> Optional[Float[np.ndarray, "N 3"]]:
         """Simulates the non-holonomic motion of a robot towards a target point.
 
@@ -232,10 +232,10 @@ class PathPlanner:
         Returns:
             numpy.array | None: An array representing the simulated trajectory of the robot, or None if it collides
         """
-        vel, rot_vel = self.robot_controller(node_i, point_s)
+        vel, rot_vel = self.robot_controller(point_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
-        robot_traj_global = robot_traj + node_i
+        robot_traj_global = robot_traj + point_i
 
         collision = self.check_collision(robot_traj_global[:, 0:2])
         if not collision:
@@ -245,7 +245,7 @@ class PathPlanner:
 
     @beartype
     def robot_controller(
-        self, node_i: Float[np.ndarray, "3"], point_s: Float[np.ndarray, "2"]
+        self, point_i: Float[np.ndarray, "3"], point_s: Float[np.ndarray, "2"]
     ) -> Tuple[float, float]:
         """
         This controller determines the velocities that will nominally move the robot from node i to node s.
@@ -254,7 +254,7 @@ class PathPlanner:
         Max velocities should be enforced.
         """
 
-        x_i, y_i, theta_i = node_i  # robot current position
+        x_i, y_i, theta_i = point_i  # robot current position
         x_s, y_s = point_s  # target point
 
         # Calculate the distance from the robot to the target point
@@ -457,10 +457,20 @@ class PathPlanner:
         Returns:
             np.array | None: A Nx3 array representing the path from node_i to point_f if valid
         """
-
-        end_point = [point_f[0], point_f[1], node_i.point[2]]
-        return np.vstack([node_i.point, end_point])
-
+        curr_point = node_i.point
+        destination = point_f
+        traj = []
+        while True:
+            curr_traj = self.simulate_trajectory(curr_point, destination)
+            if curr_traj is None:
+                return None
+            traj_end = curr_traj[-1]
+            traj = np.vstack((traj, curr_traj))
+            if np.linalg.norm(traj_end, destination) < self.stopping_dist:
+                reached_end = True
+                break
+        return traj
+    
     @beartype
     def cost_to_come(self, trajectory: Float[np.ndarray, "N 3"]) -> float:
         """
