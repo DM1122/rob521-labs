@@ -235,7 +235,7 @@ class PathPlanner:
         vel, rot_vel = self.robot_controller(point_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
-        robot_traj_global = robot_traj + point_i
+        robot_traj_global = robot_traj + point_i # might be wrong because 
 
         collision = self.check_collision(robot_traj_global[:, 0:2])
         if not collision:
@@ -628,7 +628,6 @@ class PathPlanner:
 
             return cost
 
-        n_iteration = 1000
         while True:
             point = self.sample_map_space(self.plan_bounds)
 
@@ -636,12 +635,12 @@ class PathPlanner:
             closest_node = self.nodes[closest_node_id]  # (3, 1)
 
             # Simulate driving the robot towards the closest point
-            trajectory_o = self.simulate_trajectory(
-                closest_node.point.reshape(3), point.reshape(2)
+            trajectory_o = self.connect_node_to_point(
+                closest_node, point.reshape(2)
             )  # (100,3)
             if trajectory_o is None:
                 continue
-            print(trajectory_o[-1])
+            # print(trajectory_o[-1])
             # Check for collisions and add safe points to list of nodes.
             # if not self.check_collision(trajectory_o):
             # If no collision, Add the new node
@@ -651,7 +650,12 @@ class PathPlanner:
             )  # update cost-to-come in rrt planning but does not use it to rewire the edge
             new_node = Node(new_node_point, closest_node_id, new_node_cost)
             self.nodes.append(new_node)
-            self.window.add_point(point.flatten())
+            # self.window.add_point(new_node_point.flatten())
+            self.window.add_point(
+                        map_frame_point=new_node_point[:2],
+                        radius=2,
+                        color=(0, 0, 255),
+                    )
             new_node_id = len(self.nodes) - 1
             closest_node.children_ids.append(new_node_id)
 

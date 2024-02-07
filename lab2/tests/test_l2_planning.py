@@ -480,9 +480,11 @@ def test_rrt_planning():
     #     print(node.point)
 
     # print(len(nodes))
-
-    for state in nodes:
-        print(state.point)
+    if nodes == None:
+        print("None projectory")
+    else:
+        for state in nodes:
+            print(state.point)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
