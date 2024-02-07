@@ -298,7 +298,7 @@ def test_ball_radius():
 
 @pytest.mark.parametrize(
     "start_point, end_point",
-    [(np.array([0, 0, 0], dtype=float), np.array([10, 10], dtype=float))],
+    [(np.array([0, 0, 0], dtype=float), np.array([1, -1], dtype=float))],
 )
 def test_connect_node_to_point(start_point, end_point):
     sut = PathPlanner(
