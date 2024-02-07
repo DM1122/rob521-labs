@@ -486,7 +486,7 @@ class PathPlanner:
 
         # Iterate over the trajectory array
         for i in range(1, len(trajectory)):
-            distance = np.linalg.norm(trajectory[i] - trajectory[i - 1])
+            distance = float(np.linalg.norm(trajectory[i][:2] - trajectory[i - 1][:2]))
             total_cost += distance
 
         return total_cost
@@ -681,7 +681,7 @@ class PathPlanner:
 
         while True:
             # Sample
-            new_point = self.sample_map_space()
+            new_point = self.sample_map_space(self.plan_bounds)
 
             # # Find closest node
             closest_node_id = self.closest_node(new_point)
