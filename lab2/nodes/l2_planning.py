@@ -230,14 +230,14 @@ class PathPlanner:
                                 coordinates, i.e., [x; y].
 
         Returns:
-            numpy.array|None: An array representing the simulated trajectory of the robot, or none if the trajectory is expected to collide
+            numpy.array | None: An array representing the simulated trajectory of the robot, or None if it collides
         """
         vel, rot_vel = self.robot_controller(node_i, point_s)
 
         robot_traj = self.trajectory_rollout(vel, rot_vel)
         robot_traj_global = robot_traj + node_i
 
-        collision = self.check_collision(robot_traj_global)
+        collision = self.check_collision(robot_traj_global[:, 0:2])
         if not collision:
             return robot_traj_global
         else:
@@ -444,7 +444,10 @@ class PathPlanner:
             self.gamma_RRT * (np.log(card_V) / card_V) ** (1.0 / 2.0), self.epsilon
         )
 
-    def connect_node_to_point(self, node_i, point_f):
+    @beartype
+    def connect_node_to_point(
+        self, node_i: Node, point_f: Float[np.ndarray, "2"]
+    ) -> Optional[Float[np.ndarray, "N 3"]]:
         """
         Generates a trajectory from the point in node_i to point_f in a Nx3 array.
         Args:
@@ -452,27 +455,32 @@ class PathPlanner:
             point_f (point): Destination point
 
         Returns:
-            path (np.array): A Nx3 array representing the path from node_i to point_f if valid
+            np.array | None: A Nx3 array representing the path from node_i to point_f if valid
         """
-        return self.simulate_trajectory(node_i.point.reshape(3), point_f.reshape(2))
 
-    def cost_to_come(self, trajectory_o):
+        trajectory = self.simulate_trajectory(node_i.point, point_f)
+
+        return trajectory
+
+    @beartype
+    def cost_to_come(self, trajectory: Float[np.ndarray, "N 3"]) -> float:
         """
         Computes the total Euclidean distance travelled between all substeps in a given trajectory.
 
         Args:
-            trajectory_o (np.array): Nx3 array of the path taken betweeen two points.
+            trajectory: Array of the path taken between two points.
 
         Returns:
-            cost (float): Cost of traversing the given trajectory.
+            cost: Cost of traversing the given trajectory.
         """
-        # The cost to get to a node from lavalle
-        cost = 0.0
-        for i in range(1, self.num_substeps):
-            dx = trajectory_o[i, 0] - trajectory_o[i - 1, 0]
-            dy = trajectory_o[i, 1] - trajectory_o[i - 1, 1]
-            cost += np.sqrt(dx**2 + dy**2)
-        return cost
+        total_cost = 0.0
+
+        # Iterate over the trajectory array
+        for i in range(1, len(trajectory)):
+            distance = np.linalg.norm(trajectory[i] - trajectory[i - 1])
+            total_cost += distance
+
+        return total_cost
 
     @beartype
     def update_children(self, node_id: int):

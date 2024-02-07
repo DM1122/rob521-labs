@@ -5,6 +5,27 @@ from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
+from jaxtyping import Float
+
+
+def plot_trajectory(trajectory: Float[np.ndarray, "N 3"]):
+    """Plots a provided trajectory on a quiver plot"""
+    plt.figure()
+    plt.plot(trajectory[:, 0], trajectory[:, 1], "b-", label="Trajectory")
+    plt.quiver(
+        trajectory[:, 0],
+        trajectory[:, 1],
+        np.cos(np.radians(trajectory[:, 2])),
+        np.sin(np.radians(trajectory[:, 2])),
+        scale=20,
+        color="r",
+    )
+    plt.xlabel("x position")
+    plt.ylabel("y position")
+    plt.title("Robot Trajectory")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 def test_init():
@@ -227,25 +248,8 @@ def test_trajectory_rollout():
     rot_vel = 0.1  # angular velocity (rad/s)
 
     output = sut.trajectory_rollout(vel, rot_vel)
-    print(output.shape)
     print(output)
-    # Plot results
-    plt.figure()
-    plt.plot(output[:, 0], output[:, 1], "b-", label="Trajectory")
-    plt.quiver(
-        output[:, 0],
-        output[:, 1],
-        np.cos(output[:, 2]),
-        np.sin(output[:, 2]),
-        scale=20,
-        color="r",
-    )
-    plt.xlabel("x position")
-    plt.ylabel("y position")
-    plt.title("Robot Trajectory")
-    plt.legend()
-    plt.grid()
-    plt.show()
+    plot_trajectory(output)
 
 
 @pytest.mark.parametrize(
@@ -308,14 +312,54 @@ def test_ball_radius():
     print(output)
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_connect_node_to_point():
-    pass
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.connect_node_to_point(
+        Node(point=np.array([0, 0, 1], dtype=float), parent_id=0, cost=0.0),
+        np.array([1, 0], dtype=float),
+    )
+    print(output)
+    plot_trajectory(output)
 
 
-@pytest.mark.skip(reason="Not implemented yet")
-def test_cost_to_come():
-    pass
+@pytest.mark.parametrize(
+    "trajectory, expected_cost",
+    [
+        (
+            np.array([[0, 0, 0], [3, 4, 0]], dtype=float),
+            5.0,
+        ),  # A straight line (3-4-5 triangle), expected cost is 5
+        (
+            np.array([[0, 0, 0], [0, 0, 0]], dtype=float),
+            0.0,
+        ),  # No movement, expected cost is 0
+        (
+            np.array([[0, 0, 0], [3, 4, 0], [6, 8, 0]], dtype=float),
+            10.0,
+        ),  # A path with 3 points, expected cost is 10 (two straight lines forming a 3-4-5 triangle)
+        (
+            np.array([[-3, -4, 0], [0, 0, 0]], dtype=float),
+            5.0,
+        ),  # A line with negative coordinates, expected cost is 5 (mirroring the 3-4-5 triangle)
+    ],
+)
+def test_cost_to_come(trajectory, expected_cost):
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    output = sut.cost_to_come(trajectory)
+
+    assert np.isclose(output, expected_cost)
 
 
 @pytest.mark.skip(reason="Not implemented yet")
