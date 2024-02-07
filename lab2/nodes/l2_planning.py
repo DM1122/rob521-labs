@@ -794,16 +794,18 @@ class PathPlanner:
 
         for i, node in enumerate(self.nodes):
             # Draw node point
-            self.window.add_point(node.point[0:2], radius=2, color=(0, 0, 255))
+            self.window.add_point(node.point[0:2], radius=5, color=(0, 0, 255))
 
             if node.children_ids:
                 for child_id in node.children_ids:
                     print(f"Drawing connection to child {child_id}")
+                    interpoint = (
+                        node.point[0:2]
+                        + (self.nodes[child_id].point[0:2] - node.point[0:2]) / 2
+                    )
+                    print(interpoint)
                     self.window.add_point(
-                        map_frame_point=(
-                            node.point[0:2] + self.nodes[child_id].point[0:2]
-                        )
-                        / 2,
+                        map_frame_point=interpoint,
                         radius=2,
                         color=(0, 0, 255),
                     )
