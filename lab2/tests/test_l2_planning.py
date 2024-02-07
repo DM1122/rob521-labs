@@ -114,7 +114,6 @@ def test_simulate_trajectory():  # TODO: determine if this function needs to dri
 
     for point in output:
         sut.window.add_se2_pose(point)
-    time.sleep(30)
 
 
 def test_robot_controller_max_vel(
@@ -235,7 +234,6 @@ def test_trajectory_rollout():
 
     for point in output:
         sut.window.add_se2_pose(point)
-    time.sleep(30)
 
 
 @pytest.mark.parametrize(
@@ -321,7 +319,6 @@ def test_connect_node_to_point(start_point, end_point):
 
         for point in output:
             sut.window.add_se2_pose(point)
-        time.sleep(30)
     else:
         print("Collision detected")
 
