@@ -463,7 +463,7 @@ def test_rrt_planning():
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
         goal_point=np.array([[10], [0]]),
-        stopping_dist=0.5,
+        stopping_dist=0.7,
     )
     nodes = sut.rrt_planning()
 
@@ -486,8 +486,15 @@ def test_rrt_planning():
     if nodes == None:
         print("None projectory")
     else:
-        for state in nodes:
-            print(state.point)
+        final_node = nodes[-1]
+        final_trajectory = [final_node.point]
+
+        while final_node.parent_id != -1:
+            final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
+            final_node = nodes[final_node.parent_id]
+        
+        for i in final_trajectory:
+            print(i)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 

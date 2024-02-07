@@ -234,13 +234,8 @@ class PathPlanner:
         """
         vel, rot_vel = self.robot_controller(point_i, point_s)
 
-<<<<<<< HEAD
-        robot_traj = self.trajectory_rollout(vel, rot_vel)
-        robot_traj_global = robot_traj + point_i # might be wrong because 
-=======
         robot_traj = self.trajectory_rollout(vel, rot_vel, point_i)
         robot_traj_global = robot_traj
->>>>>>> 78fe73c81c91c4d9a661d25c7343a28484eb2f5e
 
         collision = self.check_collision(robot_traj_global[:, 0:2])
         if not collision:
@@ -491,7 +486,7 @@ class PathPlanner:
 
         # Iterate over the trajectory array
         for i in range(1, len(trajectory)):
-            distance = float(np.linalg.norm(trajectory[i][:2] - trajectory[i - 1][:2]))
+            distance = np.linalg.norm(trajectory[i] - trajectory[i - 1])
             total_cost += distance
 
         return total_cost
@@ -667,6 +662,7 @@ class PathPlanner:
             # Step 6: Check if goal is reached
             if self.is_goal_reached(new_node_point):
                 return self.nodes
+
 
     def rrt_star_planning(self):
         """
