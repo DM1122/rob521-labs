@@ -234,8 +234,13 @@ class PathPlanner:
         """
         vel, rot_vel = self.robot_controller(point_i, point_s)
 
+<<<<<<< HEAD
         robot_traj = self.trajectory_rollout(vel, rot_vel)
         robot_traj_global = robot_traj + point_i # might be wrong because 
+=======
+        robot_traj = self.trajectory_rollout(vel, rot_vel, point_i)
+        robot_traj_global = robot_traj
+>>>>>>> 78fe73c81c91c4d9a661d25c7343a28484eb2f5e
 
         collision = self.check_collision(robot_traj_global[:, 0:2])
         if not collision:
@@ -290,7 +295,7 @@ class PathPlanner:
 
     @beartype
     def trajectory_rollout(
-        self, vel: float, rot_vel: float
+        self, vel: float, rot_vel: float, init_point: Float[np.ndarray, "3"]
     ) -> Float[np.ndarray, "N 3"]:
         """
         Compute the trajectory of a robot given linear and angular velocities.
@@ -303,7 +308,7 @@ class PathPlanner:
             rot_vel (float): The rotational velocity of the robot in radians per second.
 
         Returns:
-            np.ndarray: An N x 3 matrix representing the trajectory of the robot. Each row corresponds to a point in time, with the first column being the x-coordinate, the second column the y-coordinate, and the third column the angle of the robot with respect to its initial orientation.
+            np.ndarray: An N x 3 matrix representing the trajectory of the robot. Each row corresponds to a point in time, with the first column being the x-coordinate, the second column the y-coordinate, and the third column the angle of the robot with respect to the global frame.
         """
 
         def system_dynamics(state, t, v, omega):
@@ -315,9 +320,9 @@ class PathPlanner:
             return [x_dot, y_dot, theta_dot]
 
         # Initial conditions
-        x_0 = 0
-        y_0 = 0
-        theta_0 = 0
+        x_0 = init_point[0]
+        y_0 = init_point[1]
+        theta_0 = init_point[2]
 
         t_proj = self.timestep  # number of seconds to project into the future
         t = np.linspace(0, t_proj, self.num_substeps)
@@ -470,7 +475,7 @@ class PathPlanner:
                 break
             curr_point = traj_end
         return traj
-    
+
     @beartype
     def cost_to_come(self, trajectory: Float[np.ndarray, "N 3"]) -> float:
         """
@@ -486,7 +491,7 @@ class PathPlanner:
 
         # Iterate over the trajectory array
         for i in range(1, len(trajectory)):
-            distance = np.linalg.norm(trajectory[i] - trajectory[i - 1])
+            distance = float(np.linalg.norm(trajectory[i][:2] - trajectory[i - 1][:2]))
             total_cost += distance
 
         return total_cost
@@ -663,7 +668,6 @@ class PathPlanner:
             if self.is_goal_reached(new_node_point):
                 return self.nodes
 
-
     def rrt_star_planning(self):
         """
         Performs RRT* for the given map and robot. Currently performing a while loop, can be replaced with an iterative process to make use of
@@ -685,7 +689,7 @@ class PathPlanner:
 
         while True:
             # Sample
-            new_point = self.sample_map_space()
+            new_point = self.sample_map_space(self.plan_bounds)
 
             # # Find closest node
             closest_node_id = self.closest_node(new_point)
