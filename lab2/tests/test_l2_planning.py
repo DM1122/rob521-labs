@@ -362,9 +362,31 @@ def test_cost_to_come(trajectory, expected_cost):
     assert np.isclose(output, expected_cost)
 
 
-@pytest.mark.skip(reason="Not implemented yet")
 def test_update_children():
-    pass
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [10]]),
+        stopping_dist=0.5,
+    )
+
+    # Creating sample nodes
+    node0 = Node(
+        np.array([0, 0, 0], dtype=float), parent_id=-1, cost=0.0, children_ids=[1, 2]
+    )
+    node1 = Node(
+        np.array([1, 1, 0], dtype=float), parent_id=0, cost=10.0, children_ids=[3]
+    )
+    node2 = Node(
+        np.array([2, 2, 0], dtype=float), parent_id=0, cost=20.0, children_ids=[4]
+    )
+    node3 = Node(np.array([3, 3, 0], dtype=float), parent_id=1, cost=30.0)
+    node4 = Node(np.array([4, 4, 0], dtype=float), parent_id=2, cost=40.0)
+    sut.nodes = [node0, node1, node2, node3, node4]
+
+    output = sut.update_children(0)
+
+    print(output)
 
 
 @pytest.mark.parametrize(
@@ -423,6 +445,7 @@ def test_is_goal_reached():
     pass
 
 
+@pytest.mark.skip(reason="Not implemented yet")
 def test_rrt_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
@@ -452,6 +475,7 @@ def test_rrt_planning():
     # assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
+@pytest.mark.skip(reason="Not implemented yet")
 def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),

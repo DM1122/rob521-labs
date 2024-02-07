@@ -499,7 +499,7 @@ class PathPlanner:
         parent_cost = node.cost
 
         for child_id in node.children_ids:
-            child_node = self.nodes[child_id]
+            child_node = self.nodes[child_id]  # self.nodes: list[Node]
 
             trajectory = self.connect_node_to_point(node, child_node)
             trajectory_cost = self.cost_to_come(trajectory)
