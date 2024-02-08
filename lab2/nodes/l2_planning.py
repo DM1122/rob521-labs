@@ -508,13 +508,6 @@ class PathPlanner:
         node.cost += delta_cost  # Update the cost of the current node
 
         for child_id in node.children_ids:
-            child_node = self.nodes[child_id]  # self.nodes: list[Node]
-
-            trajectory = self.connect_node_to_point(node, child_node.point[:2])
-            trajectory_cost = self.cost_to_come(trajectory)
-
-            child_node.cost = parent_cost + trajectory_cost
-
             # Recursively update the children of this child node
             self.update_children(child_id, delta_cost)
 
@@ -681,12 +674,12 @@ class PathPlanner:
                     near_nodes.append(node_id)
 
             return near_nodes
-        
+
         # Checks if test node is not a parent of the curr_node
         def is_parent_of(curr_node, test_node_id):
             if curr_node.parent_id == test_node_id:
                 return True
-            if curr_node.parent_id == -1: # Origin reached
+            if curr_node.parent_id == -1:  # Origin reached
                 return False
             return is_parent_of(self.nodes[curr_node.parent_id], test_node_id)
 
@@ -737,9 +730,15 @@ class PathPlanner:
                 new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
                 if new_trajectory_cost < curr_node.cost:
                     curr_node.cost = new_trajectory_cost  # update cost of current node
-                    self.nodes[curr_node.parent_id].children_ids.remove(curr_node_id)  # remove current node as a child of its current parent
-                    curr_node.parent_id = near_node_id  # update new parent of current node
-                    near_node.children_ids.append(curr_node_id) # add current node as a child of the new parent
+                    self.nodes[curr_node.parent_id].children_ids.remove(
+                        curr_node_id
+                    )  # remove current node as a child of its current parent
+                    curr_node.parent_id = (
+                        near_node_id  # update new parent of current node
+                    )
+                    near_node.children_ids.append(
+                        curr_node_id
+                    )  # add current node as a child of the new parent
 
             """Near point rewiring, treats the new node as a parent and checks for potential children"""
             rewire_accomplished = True
@@ -750,15 +749,17 @@ class PathPlanner:
                 near_nodes = find_near_nodes(curr_node.point)
                 for near_node_id in near_nodes:
                     if is_parent_of(curr_node, near_node_id):
-                        continue # Skip if near node is an acestor of current node
+                        continue  # Skip if near node is an acestor of current node
                     near_node = self.nodes[near_node_id]
-                    new_trajectory = self.connect_node_to_point(curr_node, near_node.point[:-1])  # curr_node ---> near_node
+                    new_trajectory = self.connect_node_to_point(
+                        curr_node, near_node.point[:-1]
+                    )  # curr_node ---> near_node
                     if new_trajectory is None:
                         continue  # Skip if collision is detected for this node
 
                     new_trajectory_cost = (
                         self.cost_to_come(new_trajectory) + curr_node.cost
-                    )                                                                                     
+                    )
                     if new_trajectory_cost < near_node.cost:
                         delta = near_node.cost - new_trajectory_cost
                         near_node.cost = new_trajectory_cost  # update cost of near node
@@ -771,7 +772,9 @@ class PathPlanner:
                         curr_node.children_ids.append(
                             near_node_id
                         )  # add near node as a child of the current node
-                        self.update_children(near_node_id, delta)  # update the children costs
+                        self.update_children(
+                            near_node_id, delta
+                        )  # update the children costs
                         curr_node = near_node  # set the near node as the new current node to test
                         rewire_accomplished = True  # update flag
                         break
