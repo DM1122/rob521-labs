@@ -656,33 +656,33 @@ class PathPlanner:
             if self.is_goal_reached(new_node_point):
                 return self.nodes
 
+            # Helper function to find nodes that are within a certain radius to a given point
+    def find_near_nodes(self, point):
+        near_nodes = []
+        radius = self.ball_radius()
+
+        for node_id, node in enumerate(self.nodes):
+            node = self.nodes[node_id]
+            dist = float(np.linalg.norm(node.point - point))
+            if dist <= radius:
+                near_nodes.append(node_id)
+
+        return near_nodes
+
+    def is_ancestor(self, node, potential_ancestor_id):
+        current_node = node
+        while current_node.parent_id != -1:
+            if current_node.parent_id == potential_ancestor_id:
+                return True
+            current_node = self.nodes[current_node.parent_id]
+        return False
+    
     def rrt_star_planning(self):
         """
         Performs RRT* for the given map and robot. Currently performing a while loop, can be replaced with an iterative process to make use of
         RRT*'s "anytime" capability.
         """
-
-        # Helper function to find nodes that are within a certain radius to a given point
-        def find_near_nodes(point):
-            near_nodes = []
-            radius = self.ball_radius()
-
-            for node_id, node in enumerate(self.nodes):
-                node = self.nodes[node_id]
-                dist = float(np.linalg.norm(node.point - point))
-                if dist <= radius:
-                    near_nodes.append(node_id)
-
-            return near_nodes
-
-        # Checks if test node is not a parent of the curr_node
-        def is_parent_of(curr_node, test_node_id):
-            if curr_node.parent_id == test_node_id:
-                return True
-            if curr_node.parent_id == -1:  # Origin reached
-                return False
-            return is_parent_of(self.nodes[curr_node.parent_id], test_node_id)
-
+        goal = self.goal_point
         while True:
             # Sample
             new_point = self.sample_map_space(self.plan_bounds)
@@ -698,10 +698,9 @@ class PathPlanner:
             trajectory_cost = self.cost_to_come(trajectory_o)
 
             # # Add new node with associated costs
-            new_node = Node(
-                trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost
-            )
+            new_node = Node(trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost, [])
             self.nodes.append(new_node)
+            print("New node added", self.nodes.index(new_node), new_node.parent_id)
             self.window.add_point(
                 map_frame_point=new_node.point[:2],
                 radius=2,
@@ -715,10 +714,10 @@ class PathPlanner:
             """Last node rewiring, treats the new node as a child and finds the best parent"""
 
             # Find list of near node IDs within the ball radius
-            near_nodes = find_near_nodes(curr_node.point)
+            near_nodes = self.find_near_nodes(curr_node.point)
             for near_node_id in near_nodes:
-                if is_parent_of(self.nodes[near_node_id], curr_node_id):
-                    continue  # Skip if near node is a descendant of current node
+                if curr_node.parent_id == near_node_id:
+                    continue # Skip if we are checking for existing connection
                 near_node = self.nodes[near_node_id]
                 new_trajectory = self.connect_node_to_point(
                     near_node, curr_node.point[:-1]
@@ -729,57 +728,44 @@ class PathPlanner:
                 new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
                 if new_trajectory_cost < curr_node.cost:
                     curr_node.cost = new_trajectory_cost  # update cost of current node
-                    self.nodes[curr_node.parent_id].children_ids.remove(
-                        curr_node_id
-                    )  # remove current node as a child of its current parent
-                    curr_node.parent_id = (
-                        near_node_id  # update new parent of current node
-                    )
-                    near_node.children_ids.append(
-                        curr_node_id
-                    )  # add current node as a child of the new parent
+                    self.nodes[curr_node.parent_id].children_ids.remove(curr_node_id) # remove current node as a child of its current parent
+                    curr_node.parent_id = near_node_id  # update new parent of current node
+                    near_node.children_ids.append(curr_node_id)  # add current node as a child of the new parent
 
-            """Near point rewiring, treats the new node as a parent and checks for potential children"""
+
+            """Near edge rewiring, treats the new node as a parent and checks for potential children"""
             rewire_accomplished = True
             # while rewire_accomplished:
             for i in range(5):  # for pytest
                 rewire_accomplished = False  # flag to check for rewiring
 
-                near_nodes = find_near_nodes(curr_node.point)
+                near_nodes = self.find_near_nodes(curr_node.point)
                 for near_node_id in near_nodes:
-                    if is_parent_of(curr_node, near_node_id):
-                        continue  # Skip if near node is an acestor of current node
+                    if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
+                        continue  # Skip if near node is an ancestor of current node
                     near_node = self.nodes[near_node_id]
-                    new_trajectory = self.connect_node_to_point(
-                        curr_node, near_node.point[:-1]
-                    )  # curr_node ---> near_node
+                    new_trajectory = self.connect_node_to_point(curr_node, near_node.point[:-1])  # curr_node ---> near_node
                     if new_trajectory is None:
                         continue  # Skip if collision is detected for this node
 
-                    new_trajectory_cost = (
-                        self.cost_to_come(new_trajectory) + curr_node.cost
-                    )
+                    new_trajectory_cost = self.cost_to_come(new_trajectory) + curr_node.cost
+
                     if new_trajectory_cost < near_node.cost:
                         delta = near_node.cost - new_trajectory_cost
                         near_node.cost = new_trajectory_cost  # update cost of near node
-                        self.nodes[near_node.parent_id].children_ids.remove(
-                            near_node_id
-                        )  # remove near node as a child of its parent
-                        near_node.parent_id = (
-                            curr_node_id  # update new parent of near node
-                        )
-                        curr_node.children_ids.append(
-                            near_node_id
-                        )  # add near node as a child of the current node
-                        self.update_children(
-                            near_node_id, delta
-                        )  # update the children costs
+                        self.nodes[near_node.parent_id].children_ids.remove(near_node_id)  # remove near node as a child of its parent
+                        near_node.parent_id = curr_node_id  # update new parent of near node
+                        curr_node.children_ids.append(near_node_id)  # add near node as a child of the current node
+                        self.update_children(near_node_id, delta)  # update the children costs
                         curr_node = near_node  # set the near node as the new current node to test
+                        curr_node_id = near_node_id
                         rewire_accomplished = True  # update flag
                         break
 
             # Check for early end
-            if self.is_goal_reached(self.nodes[-1].point):
+            dist_to_goal = np.sqrt((new_node.point[0] - goal[0][0])**2 + (new_node.point[1] - goal[1][0])**2)
+            print(dist_to_goal)
+            if dist_to_goal <= self.stopping_dist:
                 return self.nodes
 
     @beartype
