@@ -657,6 +657,7 @@ class PathPlanner:
                 return self.nodes
 
             # Helper function to find nodes that are within a certain radius to a given point
+
     def find_near_nodes(self, point):
         near_nodes = []
         radius = self.ball_radius()
@@ -676,7 +677,7 @@ class PathPlanner:
                 return True
             current_node = self.nodes[current_node.parent_id]
         return False
-    
+
     def rrt_star_planning(self):
         """
         Performs RRT* for the given map and robot. Currently performing a while loop, can be replaced with an iterative process to make use of
@@ -698,7 +699,12 @@ class PathPlanner:
             trajectory_cost = self.cost_to_come(trajectory_o)
 
             # # Add new node with associated costs
-            new_node = Node(trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost, [])
+            new_node = Node(
+                trajectory_o[-1],
+                closest_node_id,
+                closest_node.cost + trajectory_cost,
+                [],
+            )
             self.nodes.append(new_node)
             print("New node added", self.nodes.index(new_node), new_node.parent_id)
             self.window.add_point(
@@ -717,7 +723,7 @@ class PathPlanner:
             near_nodes = self.find_near_nodes(curr_node.point)
             for near_node_id in near_nodes:
                 if curr_node.parent_id == near_node_id:
-                    continue # Skip if we are checking for existing connection
+                    continue  # Skip if we are checking for existing connection
                 near_node = self.nodes[near_node_id]
                 new_trajectory = self.connect_node_to_point(
                     near_node, curr_node.point[:-1]
@@ -728,10 +734,15 @@ class PathPlanner:
                 new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
                 if new_trajectory_cost < curr_node.cost:
                     curr_node.cost = new_trajectory_cost  # update cost of current node
-                    self.nodes[curr_node.parent_id].children_ids.remove(curr_node_id) # remove current node as a child of its current parent
-                    curr_node.parent_id = near_node_id  # update new parent of current node
-                    near_node.children_ids.append(curr_node_id)  # add current node as a child of the new parent
-
+                    self.nodes[curr_node.parent_id].children_ids.remove(
+                        curr_node_id
+                    )  # remove current node as a child of its current parent
+                    curr_node.parent_id = (
+                        near_node_id  # update new parent of current node
+                    )
+                    near_node.children_ids.append(
+                        curr_node_id
+                    )  # add current node as a child of the new parent
 
             """Near edge rewiring, treats the new node as a parent and checks for potential children"""
             rewire_accomplished = True
@@ -744,26 +755,41 @@ class PathPlanner:
                     if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
                         continue  # Skip if near node is an ancestor of current node
                     near_node = self.nodes[near_node_id]
-                    new_trajectory = self.connect_node_to_point(curr_node, near_node.point[:-1])  # curr_node ---> near_node
+                    new_trajectory = self.connect_node_to_point(
+                        curr_node, near_node.point[:-1]
+                    )  # curr_node ---> near_node
                     if new_trajectory is None:
                         continue  # Skip if collision is detected for this node
 
-                    new_trajectory_cost = self.cost_to_come(new_trajectory) + curr_node.cost
+                    new_trajectory_cost = (
+                        self.cost_to_come(new_trajectory) + curr_node.cost
+                    )
 
                     if new_trajectory_cost < near_node.cost:
                         delta = near_node.cost - new_trajectory_cost
                         near_node.cost = new_trajectory_cost  # update cost of near node
-                        self.nodes[near_node.parent_id].children_ids.remove(near_node_id)  # remove near node as a child of its parent
-                        near_node.parent_id = curr_node_id  # update new parent of near node
-                        curr_node.children_ids.append(near_node_id)  # add near node as a child of the current node
-                        self.update_children(near_node_id, delta)  # update the children costs
+                        self.nodes[near_node.parent_id].children_ids.remove(
+                            near_node_id
+                        )  # remove near node as a child of its parent
+                        near_node.parent_id = (
+                            curr_node_id  # update new parent of near node
+                        )
+                        curr_node.children_ids.append(
+                            near_node_id
+                        )  # add near node as a child of the current node
+                        self.update_children(
+                            near_node_id, delta
+                        )  # update the children costs
                         curr_node = near_node  # set the near node as the new current node to test
                         curr_node_id = near_node_id
                         rewire_accomplished = True  # update flag
                         break
 
             # Check for early end
-            dist_to_goal = np.sqrt((new_node.point[0] - goal[0][0])**2 + (new_node.point[1] - goal[1][0])**2)
+            dist_to_goal = np.sqrt(
+                (new_node.point[0] - goal[0][0]) ** 2
+                + (new_node.point[1] - goal[1][0]) ** 2
+            )
             print(dist_to_goal)
             if dist_to_goal <= self.stopping_dist:
                 return self.nodes
@@ -834,15 +860,15 @@ class PathPlanner:
 
 if __name__ == "__main__":
     # Set map information
-    if not on_remote:
-        map_file_path = Path("../maps/willowgarageworld_05res.png")
-        map_settings_path = Path("../maps/willowgarageworld_05res.yaml")
-    else:
-        map_file_path = Path("maps/willowgarageworld_05res.png")
-        map_settings_path = Path("maps/willowgarageworld_05res.yaml")
+    # if not on_remote:
+    #     map_file_path = Path("../maps/willowgarageworld_05res.png")
+    #     map_settings_path = Path("../maps/willowgarageworld_05res.yaml")
+    # else:
+    map_file_path = Path("maps/willowgarageworld_05res.png")
+    map_settings_path = Path("maps/willowgarageworld_05res.yaml")
 
     # robot information
-    goal_point = np.array([[10], [10]])  # m
+    goal_point = np.array([[7], [-0.5]])  # m
     stopping_dist = 0.5  # m
 
     # RRT precursor
@@ -850,7 +876,9 @@ if __name__ == "__main__":
         map_file_path, map_settings_path, goal_point, stopping_dist
     )
     nodes = path_planner.rrt_star_planning()
+    print(path_planner.recover_path())
     node_path_metric = np.hstack(path_planner.recover_path())
+    print(node_path_metric)
 
     # Leftover test functions
     np.save("shortest_path.npy", node_path_metric)
