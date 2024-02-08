@@ -709,7 +709,11 @@ class PathPlanner:
                 trajectory_o[-1], closest_node_id, closest_node.cost + trajectory_cost
             )
             self.nodes.append(new_node)
-            self.window.add_point(new_point.flatten())
+            self.window.add_point(
+                map_frame_point=new_node.point[:2],
+                radius=2,
+                color=(0, 0, 255),
+            )
             closest_node.children_ids.append(len(self.nodes) - 1)
 
             curr_node_id = len(self.nodes) - 1
@@ -756,6 +760,7 @@ class PathPlanner:
                         self.cost_to_come(new_trajectory) + curr_node.cost
                     )                                                                                     
                     if new_trajectory_cost < near_node.cost:
+                        delta = near_node.cost - new_trajectory_cost
                         near_node.cost = new_trajectory_cost  # update cost of near node
                         self.nodes[near_node.parent_id].children_ids.remove(
                             near_node_id
@@ -766,7 +771,7 @@ class PathPlanner:
                         curr_node.children_ids.append(
                             near_node_id
                         )  # add near node as a child of the current node
-                        self.update_children(near_node_id)  # update the children costs
+                        self.update_children(near_node_id, delta)  # update the children costs
                         curr_node = near_node  # set the near node as the new current node to test
                         rewire_accomplished = True  # update flag
                         break
