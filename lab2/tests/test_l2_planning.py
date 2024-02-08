@@ -1,3 +1,4 @@
+from asyncio import sleep
 import time
 from matplotlib import pyplot as plt
 from nodes.l2_planning import PathPlanner, RectBounds, Node
@@ -516,11 +517,48 @@ def test_rrt_planning():
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
+def test_find_near_nodes():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [-5]]),
+        stopping_dist=0.5,
+    )
+    node0 = Node(np.array([0, 0, 0], dtype = float), -1, 0.0)
+    node1 = Node(np.array([1, 0, 0], dtype = float), -1, 0.0)
+    node2 = Node(np.array([0, 1, 0], dtype = float), -1, 0.0)
+    node3 = Node(np.array([0, 10, 0], dtype = float), -1, 0.0)
+    sut.nodes = [node0, node1, node2, node3]
+    print("Near nodes at:")
+    print(sut.find_near_nodes(node0.point))
+
+def test_is_ancestor():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [-5]]),
+        stopping_dist=0.5,
+    )
+    
+    node0 = Node(np.array([0, 0, 0], dtype = float), -1, 0.0, children_ids=[1, 2])
+    node1 = Node(np.array([1, 0, 0], dtype = float), 0, 0.0)
+    node2 = Node(np.array([0, 1, 0], dtype = float), 1, 0.0)
+    node3 = Node(np.array([0, 10, 0], dtype = float), 0, 0.0)
+    
+    sut.nodes = [node0, node1, node2, node3]
+    print(node0.point[0], node0.point[1])
+    print(sut.goal_point[0], sut.goal_point[1])
+    print(np.sqrt((node0.point[0] - sut.goal_point[0][0])**2 + (node0.point[1] - sut.goal_point[1][0])**2))
+    assert sut.is_ancestor(node0, 1) == False
+    assert sut.is_ancestor(node1, 0) == True
+    assert sut.is_ancestor(node2, 0) == True
+    assert sut.is_ancestor(node3, 1) == False
+
 def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [1]]),
+        goal_point=np.array([[10], [0.5]]),
         stopping_dist=0.5,
     )
     nodes = sut.rrt_star_planning()
