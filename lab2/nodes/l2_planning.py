@@ -717,9 +717,8 @@ class PathPlanner:
             # Find list of near node IDs within the ball radius
             near_nodes = find_near_nodes(curr_node.point)
             for near_node_id in near_nodes:
-                if near_node_id == curr_node.parent_id:
-                    continue  # Skip if we are checking the already existing connection
-
+                if is_parent_of(self.nodes[near_node_id], curr_node_id):
+                    continue  # Skip if near node is a descendant of current node
                 near_node = self.nodes[near_node_id]
                 new_trajectory = self.connect_node_to_point(
                     near_node, curr_node.point[:-1]
