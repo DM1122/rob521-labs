@@ -867,7 +867,7 @@ if __name__ == "__main__":
     map_settings_path = Path("maps/willowgarageworld_05res.yaml")
 
     # robot information
-    goal_point = np.array([[7], [-0.5]])  # m
+    goal_point = np.array([[10], [-0.5]])  # m
     stopping_dist = 0.5  # m
 
     # RRT precursor
