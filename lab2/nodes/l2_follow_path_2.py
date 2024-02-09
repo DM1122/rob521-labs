@@ -151,12 +151,29 @@ class PathFollower:
                 self.num_opts, axis=0
             )
 
-            print(
-                "TO DO: Propogate the trajectory forward, storing the resulting points in local_paths!"
-            )
+            # print(
+            #     "TO DO: Propogate the trajectory forward, storing the resulting points in local_paths!"
+            # )
             for t in range(1, self.horizon_timesteps + 1):
-                # propogate trajectory forward, assuming perfect control of velocity and no dynamic effects
-                pass
+                for opt_index, (trans_vel, rot_vel) in enumerate(self.all_opts_scaled):
+                    # Current pose
+                    x, y, theta = local_paths[t - 1, opt_index]
+
+                    # Update position based on translational and rotational velocities
+                    delta_x = trans_vel * np.cos(theta)
+                    delta_y = trans_vel * np.sin(theta)
+                    delta_theta = rot_vel
+
+                    # New pose
+                    new_x = x + delta_x
+                    new_y = y + delta_y
+                    new_theta = theta + delta_theta
+
+                    # Ensure theta is within -pi to pi
+                    new_theta = (new_theta + np.pi) % (2 * np.pi) - np.pi
+
+                    # Store the new pose
+                    local_paths[t, opt_index] = [new_x, new_y, new_theta]
 
             # check all trajectory points for collisions
             # first find the closest collision point in the map to each local path point
@@ -166,34 +183,114 @@ class PathFollower:
             valid_opts = range(self.num_opts)
             local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50
 
-            print("TO DO: Check the points in local_path_pixels for collisions")
-            for opt in range(local_paths_pixels.shape[1]):
+            # print("TO DO: Check the points in local_path_pixels for collisions")
+            # Check the points in local_paths_pixels for collisions
+            for opt_index in range(local_paths_pixels.shape[1]):
                 for timestep in range(local_paths_pixels.shape[0]):
-                    pass
+                    # Get the position in pixels for the current option and timestep
+                    path_point = local_paths_pixels[timestep, opt_index]
+
+                    # Calculate distances to all non-zero (obstacle) pixels in the map
+                    distances = np.sqrt(
+                        np.sum((self.map_nonzero_idxes - path_point) ** 2, axis=1)
+                    )
+
+                    # Find the minimum distance to an obstacle
+                    min_distance = np.min(distances)
+
+                    # Check if this distance is smaller than the collision radius
+                    if min_distance < self.collision_radius_pix:
+                        # If in collision, mark this option as invalid
+                        local_paths_lowest_collision_dist[opt_index] = 0
+                        break
+                    else:
+                        # Update the lowest collision distance for this option if it's the lowest so far
+                        if min_distance < local_paths_lowest_collision_dist[opt_index]:
+                            local_paths_lowest_collision_dist[opt_index] = min_distance
 
             # remove trajectories that were deemed to have collisions
-            print("TO DO: Remove trajectories with collisions!")
+            # print("TO DO: Remove trajectories with collisions!")
+            # Check for collisions and filter out trajectories that have collisions
+            collision_free_opts = []
+            for opt_index in range(self.num_opts):
+                # Check if the distance to the nearest obstacle is larger than the collision radius
+                if (
+                    local_paths_lowest_collision_dist[opt_index]
+                    > self.collision_radius_pix
+                ):
+                    collision_free_opts.append(opt_index)
+
+            # Now, only keep the collision-free trajectories
+            collision_free_local_paths = local_paths[:, collision_free_opts, :]
+            collision_free_all_opts_scaled = self.all_opts_scaled[collision_free_opts]
 
             # calculate final cost and choose best option
-            print("TO DO: Calculate the final cost and choose the best control option!")
-            final_cost = np.zeros(self.num_opts)
-            if final_cost.size == 0:  # hardcoded recovery if all options have collision
+            # print("TO DO: Calculate the final cost and choose the best control option!")
+            # calculate final cost and choose best option
+            final_costs = np.full(len(collision_free_opts), np.inf)
+
+            for i, opt_index in enumerate(collision_free_opts):
+                # Extract the final pose of the trajectory
+                final_pose = collision_free_local_paths[-1, i]
+
+                # Calculate the translational and rotational distances to the current goal
+                trans_dist_to_goal = np.linalg.norm(self.cur_goal[:2] - final_pose[:2])
+                rot_dist_to_goal = np.abs(
+                    self.angle_diff(self.cur_goal[2], final_pose[2])
+                )
+
+                # Adjust rotational distance if close to goal
+                if trans_dist_to_goal < MIN_TRANS_DIST_TO_USE_ROT:
+                    rot_dist_to_goal *= ROT_DIST_MULT
+
+                # Distance to nearest obstacle (larger is better, hence the negative sign)
+                obs_dist_cost = -OBS_DIST_MULT * (
+                    self.collision_radius_pix
+                    - local_paths_lowest_collision_dist[opt_index]
+                )
+
+                # Sum the costs
+                final_costs[i] = trans_dist_to_goal + rot_dist_to_goal + obs_dist_cost
+
+            if np.all(
+                np.isinf(final_costs)
+            ):  # hardcoded recovery if all options have collision or are inf
                 control = [-0.1, 0]
             else:
-                best_opt = valid_opts[final_cost.argmin()]
+                best_opt_index = np.argmin(final_costs)
+                best_opt = collision_free_opts[best_opt_index]
                 control = self.all_opts[best_opt]
                 self.local_path_pub.publish(
-                    utils.se2_pose_list_to_path(local_paths[:, best_opt], "map")
+                    utils.se2_pose_list_to_path(
+                        collision_free_local_paths[:, best_opt_index], "map"
+                    )
                 )
 
             # send command to robot
             self.cmd_pub.publish(utils.unicyle_vel_to_twist(control))
 
             # uncomment out for debugging if necessary
-            # print("Selected control: {control}, Loop time: {time}, Max time: {max_time}".format(
-            #     control=control, time=(rospy.Time.now() - tic).to_sec(), max_time=1/CONTROL_RATE))
+            print(
+                "Selected control: {control}, Loop time: {time}, Max time: {max_time}".format(
+                    control=control,
+                    time=(rospy.Time.now() - tic).to_sec(),
+                    max_time=1 / CONTROL_RATE,
+                )
+            )
 
             self.rate.sleep()
+
+    @staticmethod
+    def angle_diff(angle1, angle2):
+        """
+        Calculate the minimum difference between two angles.
+        """
+        diff = angle2 - angle1
+        while diff > np.pi:
+            diff -= 2 * np.pi
+        while diff < -np.pi:
+            diff += 2 * np.pi
+        return diff
 
     def update_pose(self):
         # Update numpy poses with current pose using the tf_buffer
