@@ -1,12 +1,7 @@
-from asyncio import sleep
-import time
-from matplotlib import pyplot as plt
 from nodes.l2_planning import PathPlanner, RectBounds, Node
-from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
-from jaxtyping import Float
 
 
 def test_init():
@@ -524,13 +519,14 @@ def test_find_near_nodes():
         goal_point=np.array([[10], [-5]]),
         stopping_dist=0.5,
     )
-    node0 = Node(np.array([0, 0, 0], dtype = float), -1, 0.0)
-    node1 = Node(np.array([1, 0, 0], dtype = float), -1, 0.0)
-    node2 = Node(np.array([0, 1, 0], dtype = float), -1, 0.0)
-    node3 = Node(np.array([0, 10, 0], dtype = float), -1, 0.0)
+    node0 = Node(np.array([0, 0, 0], dtype=float), -1, 0.0)
+    node1 = Node(np.array([1, 0, 0], dtype=float), -1, 0.0)
+    node2 = Node(np.array([0, 1, 0], dtype=float), -1, 0.0)
+    node3 = Node(np.array([0, 10, 0], dtype=float), -1, 0.0)
     sut.nodes = [node0, node1, node2, node3]
     print("Near nodes at:")
     print(sut.find_near_nodes(node0.point))
+
 
 def test_is_ancestor():
     sut = PathPlanner(
@@ -539,20 +535,26 @@ def test_is_ancestor():
         goal_point=np.array([[10], [-5]]),
         stopping_dist=0.5,
     )
-    
-    node0 = Node(np.array([0, 0, 0], dtype = float), -1, 0.0, children_ids=[1, 2])
-    node1 = Node(np.array([1, 0, 0], dtype = float), 0, 0.0)
-    node2 = Node(np.array([0, 1, 0], dtype = float), 1, 0.0)
-    node3 = Node(np.array([0, 10, 0], dtype = float), 0, 0.0)
-    
+
+    node0 = Node(np.array([0, 0, 0], dtype=float), -1, 0.0, children_ids=[1, 2])
+    node1 = Node(np.array([1, 0, 0], dtype=float), 0, 0.0)
+    node2 = Node(np.array([0, 1, 0], dtype=float), 1, 0.0)
+    node3 = Node(np.array([0, 10, 0], dtype=float), 0, 0.0)
+
     sut.nodes = [node0, node1, node2, node3]
     print(node0.point[0], node0.point[1])
     print(sut.goal_point[0], sut.goal_point[1])
-    print(np.sqrt((node0.point[0] - sut.goal_point[0][0])**2 + (node0.point[1] - sut.goal_point[1][0])**2))
+    print(
+        np.sqrt(
+            (node0.point[0] - sut.goal_point[0][0]) ** 2
+            + (node0.point[1] - sut.goal_point[1][0]) ** 2
+        )
+    )
     assert sut.is_ancestor(node0, 1) == False
     assert sut.is_ancestor(node1, 0) == True
     assert sut.is_ancestor(node2, 0) == True
     assert sut.is_ancestor(node3, 1) == False
+
 
 def test_rrt_star_planning():
     sut = PathPlanner(
