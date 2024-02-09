@@ -1,11 +1,7 @@
-import time
-from matplotlib import pyplot as plt
 from nodes.l2_planning import PathPlanner, RectBounds, Node
-from nodes.l2_planning import Node
 import numpy as np
 import pytest
 from pathlib import Path
-from jaxtyping import Float
 
 
 def test_init():
@@ -381,9 +377,26 @@ def test_update_children():
     node4 = Node(np.array([3, 3, 0], dtype=float), parent_id=1, cost=40.0)
     sut.nodes = [node0, node1, node2, node3, node4]
 
-    output = sut.update_children(0)
+    # Set a new cost for the parent node (node0)
+    new_cost = 5.0
+    sut.update_children(0, new_cost)
+    for node in sut.nodes:
+        print(node.cost)
 
-    print(output)
+    # Assert the new costs of child nodes
+    assert sut.nodes[0].cost == 5.0  # Updated cost of node0
+    assert (
+        sut.nodes[1].cost == 15.0
+    )  # Updated cost of node1 (original cost 10.0 + delta 5.0)
+    assert (
+        sut.nodes[2].cost == 25.0
+    )  # Updated cost of node2 (original cost 20.0 + delta 5.0)
+    assert (
+        sut.nodes[3].cost == 35.0
+    )  # Updated cost of node3 (original cost 30.0 + delta 5.0)
+    assert (
+        sut.nodes[4].cost == 45.0
+    )  # Updated cost of node4 (original cost 40.0 + delta 5.0)
 
 
 @pytest.mark.parametrize(
@@ -492,18 +505,62 @@ def test_rrt_planning():
         while final_node.parent_id != -1:
             final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
             final_node = nodes[final_node.parent_id]
-        
+
         for i in final_trajectory:
             print(i)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
 
+def test_find_near_nodes():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [-5]]),
+        stopping_dist=0.5,
+    )
+    node0 = Node(np.array([0, 0, 0], dtype=float), -1, 0.0)
+    node1 = Node(np.array([1, 0, 0], dtype=float), -1, 0.0)
+    node2 = Node(np.array([0, 1, 0], dtype=float), -1, 0.0)
+    node3 = Node(np.array([0, 10, 0], dtype=float), -1, 0.0)
+    sut.nodes = [node0, node1, node2, node3]
+    print("Near nodes at:")
+    print(sut.find_near_nodes(node0.point))
+
+
+def test_is_ancestor():
+    sut = PathPlanner(
+        map_file_path=Path("maps/willowgarageworld_05res.png"),
+        map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
+        goal_point=np.array([[10], [-5]]),
+        stopping_dist=0.5,
+    )
+
+    node0 = Node(np.array([0, 0, 0], dtype=float), -1, 0.0, children_ids=[1, 2])
+    node1 = Node(np.array([1, 0, 0], dtype=float), 0, 0.0)
+    node2 = Node(np.array([0, 1, 0], dtype=float), 1, 0.0)
+    node3 = Node(np.array([0, 10, 0], dtype=float), 0, 0.0)
+
+    sut.nodes = [node0, node1, node2, node3]
+    print(node0.point[0], node0.point[1])
+    print(sut.goal_point[0], sut.goal_point[1])
+    print(
+        np.sqrt(
+            (node0.point[0] - sut.goal_point[0][0]) ** 2
+            + (node0.point[1] - sut.goal_point[1][0]) ** 2
+        )
+    )
+    assert sut.is_ancestor(node0, 1) == False
+    assert sut.is_ancestor(node1, 0) == True
+    assert sut.is_ancestor(node2, 0) == True
+    assert sut.is_ancestor(node3, 1) == False
+
+
 def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([[10], [0.5]]),
         stopping_dist=0.5,
     )
     nodes = sut.rrt_star_planning()
