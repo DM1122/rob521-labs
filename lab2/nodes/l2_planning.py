@@ -650,7 +650,8 @@ class PathPlanner:
             )  # update cost-to-come in rrt planning but does not use it to rewire the edge
             new_node = Node(new_node_point, closest_node_id, new_node_cost)
             self.nodes.append(new_node)
-            # self.window.add_point(new_node_point.flatten())
+        
+            #### """ If you want to see the added new node "
             self.window.add_point(
                         map_frame_point=new_node_point[:2],
                         radius=2,
@@ -661,6 +662,27 @@ class PathPlanner:
 
             # Step 6: Check if goal is reached
             if self.is_goal_reached(new_node_point):
+                final_node = nodes[-1]
+                final_trajectory = [final_node.point]
+
+                # drawing graph for the delivaraible
+                while final_node.parent_id != -1:
+                    final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
+                    final_node = nodes[final_node.parent_id]
+                
+                for i in final_trajectory:
+                    self.window.add_point(
+                        map_frame_point=i[:2],
+                        radius=2,
+                        color=(0, 0, 255),
+                    )
+                    if i < len(final_trajectory) - 1 :
+                        self.window.add_line(
+                            i,
+                            final_trajectory[i+1],
+                            width=1,
+                            color=(0, 0, 255),
+                        )
                 return self.nodes
 
 
