@@ -2,9 +2,9 @@ from nodes.l2_planning import PathPlanner, RectBounds, Node
 import numpy as np
 import pytest
 from pathlib import Path
+import time
 
-
-def test_init():
+def test_myhal_test_init():
     """Test constructor"""
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
@@ -12,7 +12,21 @@ def test_init():
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
     )
+    time.sleep(30)
     print(sut)
+
+def test_init():
+    """Test constructor"""
+    
+    sut = PathPlanner(
+        map_file_path=Path("maps/myhal.png"),
+        map_settings_path=Path("maps/myhal.yaml"),
+        goal_point=np.array([[2], [6]]),
+        stopping_dist=0.1,
+    )
+    time.sleep(30)
+    print(sut)
+
 
 
 @pytest.mark.parametrize(

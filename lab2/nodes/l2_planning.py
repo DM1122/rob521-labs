@@ -111,8 +111,10 @@ class PathPlanner:
         #     self.map_settings_dict["origin"][1]
         #     + self.map_shape[0] * self.map_settings_dict["resolution"]
         # )
-
-        self.plan_bounds: RectBounds = RectBounds(x=-5, y=-47, width=55, height=60)
+        if "willow" in str(map_file_path):
+            self.plan_bounds: RectBounds = RectBounds(x=-5, y=-47, width=55, height=60)
+        elif "myhal" in str(map_file_path):
+            self.plan_bounds: RectBounds = RectBounds(x=0, y=5.5, width=2.2, height=2.2)
 
         # Robot information
         self.robot_radius = 0.22  # m
@@ -123,6 +125,7 @@ class PathPlanner:
         self.goal_point = goal_point  # m
         self.stopping_dist = stopping_dist  # m # the minimum distance btw the goal point and the final position where the robot should come to stop
 
+        
         # Trajectory Simulation Parameters
         self.timestep = 1.0  # s
         self.num_substeps = 10
@@ -153,6 +156,12 @@ class PathPlanner:
             self.goal_point,
             self.stopping_dist,
         )
+
+        self.window.add_point(
+                map_frame_point=self.goal_point.reshape(2,),
+                radius=4,
+                color=(0, 0, 255),
+            )
 
         # draw planning bounds
         self.window.add_line(
@@ -619,9 +628,15 @@ class PathPlanner:
                 cost += dist
 
             return cost
-
+        
         while True:
             point = self.sample_map_space(self.plan_bounds)
+            
+            self.window.add_point(
+                map_frame_point=point,
+                radius=2,
+                color=(255, 0, 0),
+            )
 
             closest_node_id = self.closest_node(point)
             closest_node = self.nodes[closest_node_id]  # (3, 1)
@@ -644,6 +659,7 @@ class PathPlanner:
             self.nodes.append(new_node)
         
             #### """ If you want to see the added new node "
+            print(new_node_point[:2])
             self.window.add_point(
                 map_frame_point=new_node_point[:2],
                 radius=2,
@@ -885,21 +901,24 @@ if __name__ == "__main__":
     #     map_file_path = Path("../maps/willowgarageworld_05res.png")
     #     map_settings_path = Path("../maps/willowgarageworld_05res.yaml")
     # else:
-    map_file_path = Path("maps/willowgarageworld_05res.png")
-    map_settings_path = Path("maps/willowgarageworld_05res.yaml")
+    # map_file_path = Path("maps/willowgarageworld_05res.png")
+    # map_settings_path = Path("maps/willowgarageworld_05res.yaml")
+    map_file_path = Path("maps/myhal.png")
+    map_settings_path = Path("maps/myhal.yaml")
 
     # robot information
-    goal_point = np.array([[10], [-0.5]])  # m
-    stopping_dist = 0.5  # m
+    goal_point = np.array([[2], [6]])  # m
+    stopping_dist = 0.1  # m
 
     # RRT precursor
     path_planner = PathPlanner(
         map_file_path, map_settings_path, goal_point, stopping_dist
     )
-    nodes = path_planner.rrt_star_planning()
+    # nodes = path_planner.rrt_star_planning()
+    nodes = path_planner.rrt_planning()
     print(path_planner.recover_path())
     node_path_metric = np.hstack(path_planner.recover_path())
     print(node_path_metric)
 
     # Leftover test functions
-    np.save("shortest_path.npy", node_path_metric)
+    np.save("./node/path.npy", node_path_metric)
