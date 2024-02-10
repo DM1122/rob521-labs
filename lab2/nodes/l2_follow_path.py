@@ -206,6 +206,7 @@ class PathFollower:
             local_paths_pixels = (
                 self.map_origin[:2] + local_paths[:, :, :2]
             ) / self.map_resolution
+            
             valid_opts = range(self.num_opts)  # INIT
             local_paths_lowest_collision_dist = (
                 np.ones(self.num_opts) * 50
@@ -215,24 +216,24 @@ class PathFollower:
             # local_paths_pixels = (# of time steps needed to cover the CONTROLHORIZON, options of (v,w), each local path represented by 3 value )
             for opt in range(local_paths_pixels.shape[1]):
                 for timestep in range(1, self.horizon_timesteps + 1):
-                    x, y = local_paths_pixels[timestep, opt, :2]
+                    x, y = local_paths_pixels[timestep, opt, :]
                     # cityblock = manhanttan distance between two vector
                     # find the nearest boundary point and then compare it with collision_radius_pix
-                    if (
-                        np.min(cityblock(self.map_nonzero_idxes, [x, y]))
-                        < self.collision_radius_pix
-                    ):
+                    # map_np = (x, y, theta), pixel = (x, y)
+                    nonzero_position_in_pixel = (self.map_origin[:2] + self.map_np[self.map_nonzero_idxes][:2]) / self.map_resolution
+                    distance = np.min(cityblock(nonzero_position_in_pixel, [x, y]))
+                    
+                    if (distance < self.collision_radius_pix):
                         local_paths_lowest_collision_dist[opt] = min(
                             local_paths_lowest_collision_dist[opt],
-                            np.min(cityblock(self.map_nonzero_idxes, [x, y])),
+                            distance,
                         )
 
             # Remove trajectories that were deemed to have collisions
-            valid_opts = [
-                opt
-                for opt in range(self.num_opts)
-                if local_paths_lowest_collision_dist[opt] > self.collision_radius_pix
-            ]
+            valid_opts = [] # store the valid opt 
+            for opt in range(self.num_opts):
+                if local_paths_lowest_collision_dist[opt] < self.collision_radius_pix:
+                    valid_opts.append(opt) 
 
             """
             Calculate final cost and choose best option 
