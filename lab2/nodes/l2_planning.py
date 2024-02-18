@@ -635,12 +635,12 @@ class PathPlanner:
 
         while True:
             point = self.sample_map_space(self.plan_bounds)
-
-            self.window.add_point(
-                map_frame_point=point,
-                radius=2,
-                color=(255, 0, 0),
-            )
+            
+            # self.window.add_point(
+            #     map_frame_point=point,
+            #     radius=2,
+            #     color=(255, 0, 0),
+            # )
 
             closest_node_id = self.closest_node(point)
             closest_node = self.nodes[closest_node_id]  # (3, 1)
@@ -667,7 +667,7 @@ class PathPlanner:
             self.window.add_point(
                 map_frame_point=new_node_point[:2],
                 radius=2,
-                color=(0, 0, 255),
+                color=(0, 255, 0),
             )
             new_node_id = len(self.nodes) - 1
             closest_node.children_ids.append(new_node_id)
