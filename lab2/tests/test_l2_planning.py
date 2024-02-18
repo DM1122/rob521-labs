@@ -13,10 +13,6 @@ def test_myhal_test_init():
         goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
-<<<<<<< HEAD
-    time.sleep(10)
-=======
->>>>>>> refs/remotes/origin/main
     print(sut)
 
 
@@ -486,7 +482,6 @@ def test_is_goal_reached(node_point, expected):
     )
 
     output = sut.is_goal_reached(node_point)
-    # time.sleep(5)
     assert output == expected
 
 
