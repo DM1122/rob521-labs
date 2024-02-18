@@ -3,7 +3,8 @@ from jaxtyping import Float, Int
 import numpy as np
 import pygame
 from pathlib import Path
-# from pygame.locals import *
+from pygame.locals import QUIT, KEYUP, K_ESCAPE
+import sys 
 
 COLORS = dict(
     w=(255, 255, 255), k=(0, 0, 0), g=(0, 255, 0), r=(255, 0, 0), b=(0, 0, 255)

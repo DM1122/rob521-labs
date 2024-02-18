@@ -122,7 +122,7 @@ class PathPlanner:
             self.plan_bounds: RectBounds = RectBounds(x=0, y=5.5, width=2.2, height=2.2)
 
         # Robot information
-        self.robot_radius = 0.22  # m
+        self.robot_radius = 0.1  # m
         self.vel_max = 0.5  # m/s (Feel free to change!)
         self.rot_vel_max = 0.2  # rad/s (Feel free to change!)
 
@@ -245,10 +245,10 @@ class PathPlanner:
             numpy.array | None: An array representing the simulated trajectory of the robot, or None if it collides
         """
         vel, rot_vel = self.robot_controller(point_i, point_s)
-
+        
         robot_traj = self.trajectory_rollout(vel, rot_vel, point_i)
         robot_traj_global = robot_traj
-
+        
         collision = self.check_collision(robot_traj_global[:, 0:2])
         if not collision:
             return robot_traj_global
@@ -472,15 +472,30 @@ class PathPlanner:
         curr_point = node_i.point
         destination = point_f
         traj = curr_point
+        # print(f"stuck in the connect_to_node_")
         while True:
+           
+            # Within the while loop, at random specific times, we couldn't find `simulate_trajectory` 
+            # This could be because `simulate_trajectory` couldn't find a path and kept getting stuck vs. it found a path but there's no solution below so it kept searching.
+            # In the latter case, it might be that the path always the same.
+            # It turned out to be the latter, and it kept finding the same path, but it was trapped inside the while loop because the stopping distance was always larger.
+
             curr_traj = self.simulate_trajectory(curr_point, destination)
+            
             if curr_traj is None:
                 return None
             traj_end = curr_traj[-1]
             traj = np.vstack((traj, curr_traj))
-            if np.linalg.norm(traj_end[:2] - destination) < self.stopping_dist:
+            # if np.linalg.norm(traj_end[:2] - destination) < self.stopping_dist:
+            if self.stopping_dist - np.linalg.norm(traj_end[:2] - destination) < 1e-6: # important to make the threshold not using inequality sign
                 break
-            curr_point = traj_end
+            # When it exceeds self.stopping_dist, there's no way out; 
+            # the problem here is that the simulate_trajectory above is deterministic (calculating the path with the same equation between the same points), so there's no way to break out of this loop.
+            else:
+                if np.any(np.not_equal(curr_point,traj_end)): # python do not know how to deal with array of booleans 
+                    curr_point = traj_end
+                else:
+                    return None
         return traj
 
     @beartype
@@ -633,9 +648,93 @@ class PathPlanner:
 
             return cost
 
+        # new strategy for sampling 
+        # split the map into 10 * 10 small boxes, 
+        # iterate over the small boxes from left to right and top to bottom 
+        # for the long planning, 
+        # for the deliverable, our goal has to set to (43, -43.6)
+        i = 0 
+        ############setting, hyperparameter 
+        n_split = 5
+        n_times_bottle_neck = 5
+        n_bottle_neck = 9
+        ##########################
+        split_width = self.plan_bounds.width // n_split 
+        split_height = self.plan_bounds.height // n_split
+        cur_y = self.plan_bounds.top_left[1] - split_height
+        cur_x = self.plan_bounds.top_left[0] 
+        reset_timing = n_split * n_split 
+        k = 0
+        # special background knowledge on the map 
+        # since there is an bottle neck in the "willow" map, sampling 10 times more in that bottle neck region 
         while True:
-            point = self.sample_map_space(self.plan_bounds)
+            # adjust the sampling bounding boxes 
+            # RectBounds(x=-5, y=-47, width=55, height=60)
+            if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
+                print(f"new start of sampling_{k}")
+                cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
+                                        y=cur_y,\
+                                        width=split_width, height=split_height)
+            elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
+                cur_y = cur_y - split_height
+                cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
+                        y= cur_y,\
+                        width=split_width, height=split_height)
+        
+            elif i < reset_timing + n_times_bottle_neck: # number 1 bottleneck 
+                cur_bounds = RectBounds(x= 10.0,\
+                        y=  -2.0,\
+                        width= 2, height=2)
+            elif i < reset_timing + n_times_bottle_neck*2: # number 2 bottleneck
+                cur_bounds = RectBounds(x= 10.0,\
+                        y=  -13.0,\
+                        width= 2, height=3.5)
+            elif i < reset_timing + n_times_bottle_neck*3: # number 3 bottleneck
+                cur_bounds = RectBounds(x= 7,\
+                        y=  -23.0,\
+                        width= 3, height=3)
+                
+            elif i < reset_timing + n_times_bottle_neck*4: # number 4 bottleneck
+                cur_bounds = RectBounds(x= 4.5,\
+                        y=  -26.0,\
+                        width= 1.5, height=2)
+                
+            elif i < reset_timing + n_times_bottle_neck*5: # number 5 bottleneck
+                cur_bounds = RectBounds(x= 3.5,\
+                        y=  -43.6,\
+                        width= 1, height=12)
+                
+            elif i < reset_timing + n_times_bottle_neck*6: # number 6 bottleneck
+                cur_bounds = RectBounds(x= 3.5,\
+                        y=  -45.0,\
+                        width= 24, height=1)
+                
+            elif i < reset_timing + n_times_bottle_neck*7: # number 7 bottleneck
+                cur_bounds = RectBounds(x= 27,\
+                        y=  -38.0,\
+                        width= 2, height=1.5)
+            elif i < reset_timing + n_times_bottle_neck*8: # number 8 bottleneck
+                cur_bounds = RectBounds(x= 35,\
+                        y=  -45.5,\
+                        width= 3, height=1.5)
             
+            else: # number 9 bottelneck 
+                cur_bounds = RectBounds(x= 39.5,\
+                        y=  -45,\
+                        width= 1.5, height=1.5)
+
+            
+            point = self.sample_map_space(cur_bounds)
+            i += 1 
+            k +=1 
+
+            if i % (reset_timing + n_times_bottle_neck*n_bottle_neck) == 0: # go back to the top-left box again
+                i = 0
+                cur_x = self.plan_bounds.top_left[0] 
+                cur_y = self.plan_bounds.top_left[1] - split_height
+            
+            
+            # ############ if you want to see sampling points 
             # self.window.add_point(
             #     map_frame_point=point,
             #     radius=2,
@@ -646,14 +745,14 @@ class PathPlanner:
             closest_node = self.nodes[closest_node_id]  # (3, 1)
 
             # Simulate driving the robot towards the closest point
+            # connect_node_to_point include collision check 
             trajectory_o = self.connect_node_to_point(
                 closest_node, point.reshape(2)
             )  # (100,3)
             if trajectory_o is None:
+                print("collision detected") 
                 continue
-            # print(trajectory_o[-1])
-            # Check for collisions and add safe points to list of nodes.
-            # if not self.check_collision(trajectory_o):
+
             # If no collision, Add the new node
             new_node_point = trajectory_o[-1]  # The last point of the trajectory
             new_node_cost = (
@@ -662,38 +761,45 @@ class PathPlanner:
             new_node = Node(new_node_point, closest_node_id, new_node_cost)
             self.nodes.append(new_node)
 
-            #### """ If you want to see the added new node "
-            print(new_node_point[:2])
+            ############# """ If you want to see the added new node "
             self.window.add_point(
                 map_frame_point=new_node_point[:2],
                 radius=2,
                 color=(0, 255, 0),
             )
+
+            ####### searching for a specific point location 
+            # self.window.add_point(
+            #     map_frame_point=np.array([39,-43]),
+            #     radius=2,
+            #     color=(0, 0, 255),
+            # )
+            
             new_node_id = len(self.nodes) - 1
             closest_node.children_ids.append(new_node_id)
 
             # Step 6: Check if goal is reached
             if self.is_goal_reached(new_node_point):
-                final_node = nodes[-1]
+                final_node = self.nodes[-1]
                 final_trajectory = [final_node.point]
 
                 # drawing graph for the delivaraible
                 while final_node.parent_id != -1:
                     final_trajectory = [
-                        nodes[final_node.parent_id].point
+                        self.nodes[final_node.parent_id].point
                     ] + final_trajectory
-                    final_node = nodes[final_node.parent_id]
-
-                for i in final_trajectory:
+                    final_node = self.nodes[final_node.parent_id]
+            
+                for index, point in enumerate(final_trajectory):
                     self.window.add_point(
-                        map_frame_point=i[:2],
+                        map_frame_point=point[:2],
                         radius=2,
                         color=(0, 0, 255),
                     )
-                    if i < len(final_trajectory) - 1:
+                    if index < len(final_trajectory) - 1:
                         self.window.add_line(
-                            i,
-                            final_trajectory[i + 1],
+                            point[:2],
+                            final_trajectory[index + 1][:2],
                             width=1,
                             color=(0, 0, 255),
                         )

@@ -4,8 +4,7 @@ import pytest
 from pathlib import Path
 import time
 
-
-def test_myhal_test_init():
+def test_willow_test_init():
     """Test constructor"""
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
@@ -13,14 +12,11 @@ def test_myhal_test_init():
         goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
-<<<<<<< HEAD
     time.sleep(10)
-=======
->>>>>>> refs/remotes/origin/main
     print(sut)
 
 
-def test_init():
+def test_myhal_init():
     """Test constructor"""
 
     sut = PathPlanner(
@@ -46,10 +42,10 @@ def test_sample_map_space(bounds):
         goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
-
-    point = sut.sample_map_space(bounds)
-    print(point)
-
+    for i in range(10):
+        point = sut.sample_map_space(bounds)
+        print(point)
+    time.sleep(10)
     # Assert that the point lies within the given bounds
     assert bounds.x <= point[0] <= bounds.x + bounds.width
     assert bounds.y <= point[1] <= bounds.y + bounds.height
@@ -491,42 +487,31 @@ def test_is_goal_reached(node_point, expected):
 
 
 def test_rrt_planning():
+    # the real goal = 43, -43.6
+    # intermidiate goal = 3.5, -43.6
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([10, 0]),
+        goal_point=np.array([43, -43.6]),
         stopping_dist=0.7,
     )
+    start_time = time.time()
     nodes = sut.rrt_planning()
 
-    # print(nodes[0].point.shape, nodes[1].shape)
-    # print(nodes[0].point, nodes[1])
-
-    # for state in nodes:
-    #     print(state.point[:2].shape)
-    #     print(state.point[:2].ndim)
-    #     break
-    # print(nodes.shape)
-    # for node in nodes:
-    #     print(node.point)
-
-    # print(len(nodes))
-    # for node in nodes:
-    #     print(node.point)
-
-    # print(len(nodes))
     if nodes == None:
         print("None projectory")
-    else:
-        final_node = nodes[-1]
-        final_trajectory = [final_node.point]
+    # else:
+        # final_node = nodes[-1]
+        # final_trajectory = [final_node.point]
 
-        while final_node.parent_id != -1:
-            final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
-            final_node = nodes[final_node.parent_id]
+        # while final_node.parent_id != -1:
+        #     final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
+        #     final_node = nodes[final_node.parent_id]
 
-        for i in final_trajectory:
-            print(i)
+        # for i in final_trajectory:
+        #     print(i)
+    print(f"total time: {time.time() - start_time }")
+    time.sleep(30)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
