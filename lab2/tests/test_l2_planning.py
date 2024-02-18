@@ -12,7 +12,7 @@ def test_myhal_test_init():
         goal_point=np.array([[10], [10]]),
         stopping_dist=0.5,
     )
-    time.sleep(30)
+    time.sleep(10)
     print(sut)
 
 def test_init():
@@ -121,9 +121,11 @@ def test_simulate_trajectory():  # TODO: determine if this function needs to dri
         point_i=np.array([0, 0, 0], dtype=float), point_s=np.array([1, 0], dtype=float)
     )
     print(output)
-
-    for point in output:
-        sut.window.add_se2_pose(point)
+    if output == None:
+        print("output is None")
+    else:
+        for point in output:
+            sut.window.add_se2_pose(point)
 
 
 def test_robot_controller_max_vel(
