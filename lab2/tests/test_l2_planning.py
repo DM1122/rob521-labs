@@ -4,29 +4,28 @@ import pytest
 from pathlib import Path
 import time
 
+
 def test_myhal_test_init():
     """Test constructor"""
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
-    time.sleep(30)
     print(sut)
+
 
 def test_init():
     """Test constructor"""
-    
+
     sut = PathPlanner(
         map_file_path=Path("maps/myhal.png"),
         map_settings_path=Path("maps/myhal.yaml"),
-        goal_point=np.array([[2], [6]]),
+        goal_point=np.array([2, 6]),
         stopping_dist=0.1,
     )
-    time.sleep(30)
     print(sut)
-
 
 
 @pytest.mark.parametrize(
@@ -40,7 +39,7 @@ def test_sample_map_space(bounds):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -64,7 +63,7 @@ def test_check_if_duplicate(test_input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -93,7 +92,7 @@ def test_closest_node(test_input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -113,7 +112,7 @@ def test_simulate_trajectory():  # TODO: determine if this function needs to dri
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -141,7 +140,7 @@ def test_robot_controller_max_vel(
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -167,7 +166,7 @@ def test_robot_controller_max_rot_180(
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -192,7 +191,7 @@ def test_robot_controller_max_rot_90(
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -217,7 +216,7 @@ def test_robot_controller_max_rot_minus_90(
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -231,7 +230,7 @@ def test_trajectory_rollout():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -263,7 +262,7 @@ def test_point_to_cell(test_input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -286,7 +285,7 @@ def test_points_to_robot_circle(test_input):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -298,7 +297,7 @@ def test_ball_radius():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -314,7 +313,7 @@ def test_connect_node_to_point(start_point, end_point):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [0]]),
+        goal_point=np.array([10, 0]),
         stopping_dist=0.5,
     )
 
@@ -358,7 +357,7 @@ def test_cost_to_come(trajectory, expected_cost):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -371,7 +370,7 @@ def test_update_children():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [10]]),
+        goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
 
@@ -427,7 +426,7 @@ def test_is_trajectory_out_of_bounds(test_input, expected_output):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[15], [0]]),
+        goal_point=np.array([15, 0]),
         stopping_dist=0.5,
     )
 
@@ -455,7 +454,7 @@ def test_check_collision(test_input, expected_output: bool):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[15], [0]]),
+        goal_point=np.array([15, 0]),
         stopping_dist=0.5,
     )
 
@@ -467,21 +466,21 @@ def test_check_collision(test_input, expected_output: bool):
 @pytest.mark.parametrize(
     "node_point, expected",
     [
-        (np.array([10.0, -5, 0]), True),  # Node point at the goal
-        (np.array([10.3, -4.7, 0]), True),  # Node point within stopping distance
-        (np.array([11.0, -6, 0]), False),  # Node point outside stopping distance
+        (np.array([3.0, 1.0, 0]), True),  # Node point at the goal
+        (np.array([3.1, 1.1, 0]), True),  # Node point within stopping distance
+        (np.array([5.0, 1.0, 0]), False),  # Node point outside stopping distance
     ],
 )
 def test_is_goal_reached(node_point, expected):
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [-5]]),
+        goal_point=np.array([3, 1]),
         stopping_dist=0.5,
     )
 
     output = sut.is_goal_reached(node_point)
-
+    # time.sleep(5)
     assert output == expected
 
 
@@ -489,7 +488,7 @@ def test_rrt_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [0]]),
+        goal_point=np.array([10, 0]),
         stopping_dist=0.7,
     )
     nodes = sut.rrt_planning()
@@ -530,7 +529,7 @@ def test_find_near_nodes():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [-5]]),
+        goal_point=np.array([10, -5]),
         stopping_dist=0.5,
     )
     node0 = Node(np.array([0, 0, 0], dtype=float), -1, 0.0)
@@ -546,7 +545,7 @@ def test_is_ancestor():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [-5]]),
+        goal_point=np.array([10, -5]),
         stopping_dist=0.5,
     )
 
@@ -560,8 +559,8 @@ def test_is_ancestor():
     print(sut.goal_point[0], sut.goal_point[1])
     print(
         np.sqrt(
-            (node0.point[0] - sut.goal_point[0][0]) ** 2
-            + (node0.point[1] - sut.goal_point[1][0]) ** 2
+            (node0.point[0] - sut.goal_point[0]) ** 2
+            + (node0.point[1] - sut.goal_point[1]) ** 2
         )
     )
     assert sut.is_ancestor(node0, 1) == False
@@ -574,7 +573,7 @@ def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [0.5]]),
+        goal_point=np.array([10, 0.5]),
         stopping_dist=0.5,
     )
     nodes = sut.rrt_star_planning()
@@ -585,7 +584,7 @@ def test_recover_path():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [0]]),
+        goal_point=np.array([10, 0]),
         stopping_dist=0.5,
     )
 
@@ -598,7 +597,7 @@ def test_plot_graph():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([[10], [-5]]),
+        goal_point=np.array([10, -5]),
         stopping_dist=0.5,
     )
 
