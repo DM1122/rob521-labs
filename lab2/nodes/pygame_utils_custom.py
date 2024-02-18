@@ -72,20 +72,23 @@ class PygameWindow:
         width=0,
         color=COLORS["k"],
     ):
-        map_frame_point[1] = -map_frame_point[1]  # for top left origin
+        map_frame_point_new = np.copy(map_frame_point)
+        map_frame_point_new[1] = -map_frame_point_new[1]  # for top left origin
         point_vec = self.point_to_vec(
-            np.array(map_frame_point) / self.meters_per_pixel + self.origin_pixels
+            np.array(map_frame_point_new) / self.meters_per_pixel + self.origin_pixels
         )
         pygame.draw.circle(self.screen, color, point_vec, radius, width)
         pygame.display.update()
 
     def add_se2_pose(self, map_frame_pose, length=1, width=0, color=COLORS["k"]):
-        map_frame_pose[1] = -map_frame_pose[1]  # for top left origin
+        map_frame_pose_new = np.copy(map_frame_pose)
+        map_frame_pose_new[1] = -map_frame_pose_new[1]  # for top left origin
         l = length
         p_center = (
-            np.array(map_frame_pose[:2]) / self.meters_per_pixel + self.origin_pixels
+            np.array(map_frame_pose_new[:2]) / self.meters_per_pixel
+            + self.origin_pixels
         )
-        theta = map_frame_pose[2]
+        theta = map_frame_pose_new[2]
 
         # y terms all made opposite of expected here because of top left origin
         p_back = np.array(
@@ -112,13 +115,15 @@ class PygameWindow:
         width=1,
         color=COLORS["k"],
     ):
-        map_frame_point1[1] = -map_frame_point1[1]  # for top left origin
+        map_frame_point1_new = np.copy(map_frame_point1)
+        map_frame_point2_new = np.copy(map_frame_point2)
+        map_frame_point1_new[1] = -map_frame_point1_new[1]  # for top left origin
         p1 = self.point_to_vec(
-            np.array(map_frame_point1) / self.meters_per_pixel + self.origin_pixels
+            np.array(map_frame_point1_new) / self.meters_per_pixel + self.origin_pixels
         )
-        map_frame_point2[1] = -map_frame_point2[1]  # for top left origin
+        map_frame_point2_new[1] = -map_frame_point2_new[1]  # for top left origin
         p2 = self.point_to_vec(
-            np.array(map_frame_point2) / self.meters_per_pixel + self.origin_pixels
+            np.array(map_frame_point2_new) / self.meters_per_pixel + self.origin_pixels
         )
         pygame.draw.line(self.screen, color, p1, p2, width)
         pygame.display.update()

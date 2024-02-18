@@ -7,9 +7,9 @@ import matplotlib.image as mpimg
 from skimage.draw import disk
 from pathlib import Path
 from scipy.integrate import odeint
-from jaxtyping import Float
+from jaxtyping import Float, Int
 from beartype import beartype
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 from pydantic import Field
 import random
 
@@ -90,8 +90,13 @@ class Node:
 # Path Planner
 class PathPlanner:
     # A path planner capable of perfomring RRT and RRT*
+    @beartype
     def __init__(
-        self, map_file_path: Path, map_settings_path: Path, goal_point, stopping_dist
+        self,
+        map_file_path: Path,
+        map_settings_path: Path,
+        goal_point: Union[Int[np.ndarray, "2"], Float[np.ndarray, "2"]],
+        stopping_dist: float,
     ):
         # Get map information
         self.occupancy_map = load_map(map_file_path)
@@ -125,7 +130,6 @@ class PathPlanner:
         self.goal_point = goal_point  # m
         self.stopping_dist = stopping_dist  # m # the minimum distance btw the goal point and the final position where the robot should come to stop
 
-        
         # Trajectory Simulation Parameters
         self.timestep = 1.0  # s
         self.num_substeps = 10
@@ -158,10 +162,10 @@ class PathPlanner:
         )
 
         self.window.add_point(
-                map_frame_point=self.goal_point.reshape(2,),
-                radius=4,
-                color=(0, 0, 255),
-            )
+            map_frame_point=self.goal_point,
+            radius=4,
+            color=(0, 0, 255),
+        )
 
         # draw planning bounds
         self.window.add_line(
@@ -628,7 +632,7 @@ class PathPlanner:
                 cost += dist
 
             return cost
-        
+
         while True:
             point = self.sample_map_space(self.plan_bounds)
             
@@ -657,7 +661,7 @@ class PathPlanner:
             )  # update cost-to-come in rrt planning but does not use it to rewire the edge
             new_node = Node(new_node_point, closest_node_id, new_node_cost)
             self.nodes.append(new_node)
-        
+
             #### """ If you want to see the added new node "
             print(new_node_point[:2])
             self.window.add_point(
@@ -675,19 +679,21 @@ class PathPlanner:
 
                 # drawing graph for the delivaraible
                 while final_node.parent_id != -1:
-                    final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
+                    final_trajectory = [
+                        nodes[final_node.parent_id].point
+                    ] + final_trajectory
                     final_node = nodes[final_node.parent_id]
-                
+
                 for i in final_trajectory:
                     self.window.add_point(
                         map_frame_point=i[:2],
                         radius=2,
                         color=(0, 0, 255),
                     )
-                    if i < len(final_trajectory) - 1 :
+                    if i < len(final_trajectory) - 1:
                         self.window.add_line(
                             i,
-                            final_trajectory[i+1],
+                            final_trajectory[i + 1],
                             width=1,
                             color=(0, 0, 255),
                         )
@@ -824,8 +830,7 @@ class PathPlanner:
 
             # Check for early end
             dist_to_goal = np.sqrt(
-                (new_node.point[0] - goal[0][0]) ** 2
-                + (new_node.point[1] - goal[1][0]) ** 2
+                (new_node.point[0] - goal[0]) ** 2 + (new_node.point[1] - goal[1]) ** 2
             )
             print(dist_to_goal)
             if dist_to_goal <= self.stopping_dist:
@@ -907,7 +912,7 @@ if __name__ == "__main__":
     map_settings_path = Path("maps/myhal.yaml")
 
     # robot information
-    goal_point = np.array([[2], [6]])  # m
+    goal_point = np.array([2, 6])  # m
     stopping_dist = 0.1  # m
 
     # RRT precursor
