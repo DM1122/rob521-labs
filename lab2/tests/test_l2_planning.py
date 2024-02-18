@@ -12,10 +12,7 @@ def test_willow_test_init():
         goal_point=np.array([10, 10]),
         stopping_dist=0.5,
     )
-<<<<<<< HEAD
     time.sleep(10)
-=======
->>>>>>> 183f2b58c8c65ba1646786f491d661f0acc60147
     print(sut)
 
 

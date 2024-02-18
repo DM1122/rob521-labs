@@ -15,28 +15,29 @@ the triangle on top-left spot is the starting node and the blue cicle on the bot
 ### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. (David)
 
 ### 4. Algorithm descriptions (Daye + Davin)
+### RRT Planning Algorithm (Daye)
 
-#### RRT planning 
+1. **Sample a Random Point**
+   - Adjusted sampling strategy tailored to the 'Willow Garage Map':
+     - Split the map into 10x10 small boxes and iterate over them from left to right and top to bottom.
+     - Due to bottleneck regions with low visibility in the "Willow" map:
+       - Implement extra small bottleneck regions.
+       - Sample points 10 times in those bottleneck regions.
 
-       
-        <RRT alogrithm>
+2. Find the Closest Point to the Sampled Point in the Node List:
+   - Using Euclidean distance.
 
-        1) sample one random point
-           - adjusted sampling stratgy fit to the our `willow  garage map`
-             - split the map into 10 * 10 small boxes, iterate over the small boxes from left to right and from top to bottom 
-             - Since there are bottle-neck region with low visibility in the "willow" map, 
-               - Set the extra small bottle neck region 
-               - sampling points 10 times in that bottle neck region 
-  
-        2) find the closest point to the sampled point in the node list
-           1) using Euclidean distance
+3. Find Trajectory to the Closest Point with Collision Check:
+   - Controller:
+     - Determine the overall platform's velocity.
+     - For the number of self.timestep, compute configuration in the inertial frame (`trajectory_rollout` function).
+     - Collision checking:
+       - If the path to the new state is collision-free:
+         - Add endpoint.
+         - Add path from the nearest node to the endpoint.
 
-        3) find trajectory to the closest point with collision check together 
-            - 
-            - if path to NEW_STATE is collision free
-                - Add end point
-                - Add path from nearest node to end point
-        4) retrun success/failure and current tree
+4. Return Success/Failure and Current Tree.
+
 
 
 
