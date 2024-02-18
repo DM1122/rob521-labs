@@ -855,11 +855,10 @@ class PathPlanner:
                 [],
             )
             self.nodes.append(new_node)
-            print("New node added", self.nodes.index(new_node), new_node.parent_id)
             self.window.add_point(
                 map_frame_point=new_node.point[:2],
                 radius=2,
-                color=(0, 0, 255),
+                color=(255, 0, 0),
             )
             closest_node.children_ids.append(len(self.nodes) - 1)
 
@@ -938,7 +937,6 @@ class PathPlanner:
             dist_to_goal = np.sqrt(
                 (new_node.point[0] - goal[0]) ** 2 + (new_node.point[1] - goal[1]) ** 2
             )
-            print(dist_to_goal)
             if dist_to_goal <= self.stopping_dist:
                 return self.nodes
 
