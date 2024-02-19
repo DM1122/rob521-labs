@@ -485,7 +485,7 @@ def test_is_goal_reached(node_point, expected):
     assert output == expected
 
 
-def test_rrt_planning():
+def test_rrt_willow_planning():
     # the real goal = 43, -43.6
     # intermidiate goal = 3.5, -43.6
     sut = PathPlanner(
@@ -499,21 +499,31 @@ def test_rrt_planning():
 
     if nodes == None:
         print("None projectory")
-    # else:
-        # final_node = nodes[-1]
-        # final_trajectory = [final_node.point]
-
-        # while final_node.parent_id != -1:
-        #     final_trajectory = [nodes[final_node.parent_id].point] + final_trajectory
-        #     final_node = nodes[final_node.parent_id]
-
-        # for i in final_trajectory:
-        #     print(i)
+    
     print(f"total time: {time.time() - start_time }")
     time.sleep(30)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
 
+def test_rrt_myhal_planning():
+    """Test constructor"""
+
+    sut = PathPlanner(
+        map_file_path=Path("maps/myhal.png"),
+        map_settings_path=Path("maps/myhal.yaml"),
+        goal_point=np.array([2, 6]),
+        stopping_dist=0.05,
+    )
+    start_time = time.time()
+    nodes = sut.rrt_planning()
+
+    if nodes == None:
+        print("None projectory")
+    print(f"total time: {time.time() - start_time }")
+    time.sleep(30)
+    assert isinstance(nodes, list)  # Check if 'nodes' is a list
+    assert len(nodes) > 0  # Check if 'nodes' has at least one element
+    
 
 def test_find_near_nodes():
     sut = PathPlanner(

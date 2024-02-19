@@ -103,6 +103,9 @@ class PathPlanner:
         self.map_shape = self.occupancy_map.shape
         self.map_settings_dict = load_map_yaml(map_settings_path)
 
+        # map name 
+        self.map_name = str(map_file_path)
+
         # Get the metric bounds of the map
         # origin, the upper right point (real world) because it is multiplied by the resolution
         # self.bounds = np.zeros([2, 2])  # m
@@ -119,7 +122,7 @@ class PathPlanner:
         if "willow" in str(map_file_path):
             self.plan_bounds: RectBounds = RectBounds(x=-5, y=-47, width=55, height=60)
         elif "myhal" in str(map_file_path):
-            self.plan_bounds: RectBounds = RectBounds(x=0, y=5.5, width=2.2, height=2.2)
+            self.plan_bounds: RectBounds = RectBounds(x=0.0, y=5.4, width=2.2, height=2.3)
 
         # Robot information
         self.robot_radius = 0.1  # m
@@ -135,9 +138,15 @@ class PathPlanner:
         self.num_substeps = 10
 
         # Planning storage
-        self.nodes: list[Node] = [
-            Node(point=np.array([0.0, 0.0, 0.0]), parent_id=-1, cost=0.0)
+        if "myhal" in self.map_name: # myhal map's start point is different from the other maps
+            self.nodes: list[Node] = [
+            Node(point=np.array([0.1, 5.5, -0.0]), parent_id=-1, cost=0.0)
         ]
+        else:
+
+            self.nodes: list[Node] = [
+                Node(point=np.array([0.0, 0.0, 0.0]), parent_id=-1, cost=0.0)
+            ]
 
         # RRT* Specific Parameters
         self.lebesgue_free = (
@@ -166,6 +175,7 @@ class PathPlanner:
             radius=4,
             color=(0, 0, 255),
         )
+
 
         # draw planning bounds
         self.window.add_line(
@@ -592,6 +602,7 @@ class PathPlanner:
             for point in footprint:
                 x, y = point
                 # Check if the point is within the map bounds
+                
                 if (
                     0 <= x < self.occupancy_map.shape[1]
                     and 0 <= y < self.occupancy_map.shape[0]
@@ -646,7 +657,8 @@ class PathPlanner:
                 # Accumulate the cost
                 cost += dist
 
-            return cost
+            return cost           
+
 
         # new strategy for sampling 
         # split the map into 10 * 10 small boxes, 
@@ -654,92 +666,156 @@ class PathPlanner:
         # for the long planning, 
         # for the deliverable, our goal has to set to (43, -43.6)
         i = 0 
-        ############setting, hyperparameter 
-        n_split = 5
-        n_times_bottle_neck = 5
-        n_bottle_neck = 9
-        ##########################
-        split_width = self.plan_bounds.width // n_split 
-        split_height = self.plan_bounds.height // n_split
-        cur_y = self.plan_bounds.top_left[1] - split_height
-        cur_x = self.plan_bounds.top_left[0] 
-        reset_timing = n_split * n_split 
         k = 0
         # special background knowledge on the map 
         # since there is an bottle neck in the "willow" map, sampling 10 times more in that bottle neck region 
-        while True:
-            # adjust the sampling bounding boxes 
-            # RectBounds(x=-5, y=-47, width=55, height=60)
-            if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
-                print(f"new start of sampling_{k}")
-                cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                        y=cur_y,\
-                                        width=split_width, height=split_height)
-            elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                cur_y = cur_y - split_height
-                cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
-                        y= cur_y,\
-                        width=split_width, height=split_height)
-        
-            elif i < reset_timing + n_times_bottle_neck: # number 1 bottleneck 
-                cur_bounds = RectBounds(x= 10.0,\
-                        y=  -2.0,\
-                        width= 2, height=2)
-            elif i < reset_timing + n_times_bottle_neck*2: # number 2 bottleneck
-                cur_bounds = RectBounds(x= 10.0,\
-                        y=  -13.0,\
-                        width= 2, height=3.5)
-            elif i < reset_timing + n_times_bottle_neck*3: # number 3 bottleneck
-                cur_bounds = RectBounds(x= 7,\
-                        y=  -23.0,\
-                        width= 3, height=3)
-                
-            elif i < reset_timing + n_times_bottle_neck*4: # number 4 bottleneck
-                cur_bounds = RectBounds(x= 4.5,\
-                        y=  -26.0,\
-                        width= 1.5, height=2)
-                
-            elif i < reset_timing + n_times_bottle_neck*5: # number 5 bottleneck
-                cur_bounds = RectBounds(x= 3.5,\
-                        y=  -43.6,\
-                        width= 1, height=12)
-                
-            elif i < reset_timing + n_times_bottle_neck*6: # number 6 bottleneck
-                cur_bounds = RectBounds(x= 3.5,\
-                        y=  -45.0,\
-                        width= 24, height=1)
-                
-            elif i < reset_timing + n_times_bottle_neck*7: # number 7 bottleneck
-                cur_bounds = RectBounds(x= 27,\
-                        y=  -38.0,\
-                        width= 2, height=1.5)
-            elif i < reset_timing + n_times_bottle_neck*8: # number 8 bottleneck
-                cur_bounds = RectBounds(x= 35,\
-                        y=  -45.5,\
-                        width= 3, height=1.5)
-            
-            else: # number 9 bottelneck 
-                cur_bounds = RectBounds(x= 39.5,\
-                        y=  -45,\
-                        width= 1.5, height=1.5)
+        n_times_bottle_neck = 0
+        n_bottle_neck = 0
+        if "willow" in self.map_name:
+            ############ willow map setting, hyperparameter 
+            n_split = 5
+            n_times_bottle_neck = 5
+            n_bottle_neck = 9
+            ##########################
 
+            split_width = self.plan_bounds.width // n_split 
+            split_height = self.plan_bounds.height // n_split
+            
+            reset_timing = n_split * n_split 
+
+            cur_y = self.plan_bounds.top_left[1] - split_height
+            cur_x = self.plan_bounds.top_left[0] 
+        elif "myhal" in self.map_name:
+            # myhal from left-bottom to right-top 
+            ############ myhal map setting, hyperparameter 
+            n_split = 2
+            ##########################
+            split_width = self.plan_bounds.width / n_split 
+            split_height = self.plan_bounds.height / n_split
+            reset_timing = n_split * n_split 
+
+            cur_y = self.plan_bounds.bottom_left[1]
+            cur_x = self.plan_bounds.bottom_left[0] 
+            
+        else:
+            ############ normal map setting 
+            n_split = 5
+            ##########################
+            split_width = self.plan_bounds.width / n_split 
+            split_height = self.plan_bounds.height / n_split
+            cur_y = self.plan_bounds.top_left[1] - split_height
+            cur_x = self.plan_bounds.top_left[0] 
+            reset_timing = n_split * n_split 
+
+            cur_y = self.plan_bounds.top_left[1] - split_height
+            cur_x = self.plan_bounds.top_left[0] 
+       
+
+        while True:
+
+            if "willow" in self.map_name:
+                # adjust the sampling bounding boxes 
+                # RectBounds(x=-5, y=-47, width=55, height=60)
+                if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
+                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
+                                            y=cur_y,\
+                                            width=split_width, height=split_height)
+                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
+                    cur_y = cur_y - split_height
+                    cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
+                            y= cur_y,\
+                            width=split_width, height=split_height)
+            
+                elif i < reset_timing + n_times_bottle_neck: # number 1 bottleneck 
+                    cur_bounds = RectBounds(x= 10.0,\
+                            y=  -2.0,\
+                            width= 2, height=2)
+                elif i < reset_timing + n_times_bottle_neck*2: # number 2 bottleneck
+                    cur_bounds = RectBounds(x= 10.0,\
+                            y=  -13.0,\
+                            width= 2, height=3.5)
+                elif i < reset_timing + n_times_bottle_neck*3: # number 3 bottleneck
+                    cur_bounds = RectBounds(x= 7,\
+                            y=  -23.0,\
+                            width= 3, height=3)
+                    
+                elif i < reset_timing + n_times_bottle_neck*4: # number 4 bottleneck
+                    cur_bounds = RectBounds(x= 4.5,\
+                            y=  -26.0,\
+                            width= 1.5, height=2)
+                    
+                elif i < reset_timing + n_times_bottle_neck*5: # number 5 bottleneck
+                    cur_bounds = RectBounds(x= 3.5,\
+                            y=  -43.6,\
+                            width= 1, height=12)
+                    
+                elif i < reset_timing + n_times_bottle_neck*6: # number 6 bottleneck
+                    cur_bounds = RectBounds(x= 3.5,\
+                            y=  -45.0,\
+                            width= 24, height=1)
+                    
+                elif i < reset_timing + n_times_bottle_neck*7: # number 7 bottleneck
+                    cur_bounds = RectBounds(x= 27,\
+                            y=  -38.0,\
+                            width= 2, height=1.5)
+                elif i < reset_timing + n_times_bottle_neck*8: # number 8 bottleneck
+                    cur_bounds = RectBounds(x= 35,\
+                            y=  -45.5,\
+                            width= 3, height=1.5)
+                
+                else: # number 9 bottelneck 
+                    cur_bounds = RectBounds(x= 39.5,\
+                            y=  -45,\
+                            width= 1.5, height=1.5)
+            elif "myhal" in self.map_name:
+                # adjust the sampling bounding boxes 
+                if i == 0 or (i % n_split != 0 and i < reset_timing): # move along the x-axis
+                 
+                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
+                                            y=cur_y,\
+                                            width=split_width, height=split_height)
+                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
+                    cur_y = cur_y + split_height
+                    cur_bounds = RectBounds(x=self.plan_bounds.bottom_left[0],\
+                            y= cur_y,\
+                            width=split_width, height=split_height)
+            
+            else:
+                # adjust the sampling bounding boxes 
+                if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
+                 
+                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
+                                            y=cur_y,\
+                                            width=split_width, height=split_height)
+                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
+                    cur_y = cur_y - split_height
+                    cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
+                            y= cur_y,\
+                            width=split_width, height=split_height)
+            
             
             point = self.sample_map_space(cur_bounds)
             i += 1 
             k +=1 
-
+            
             if i % (reset_timing + n_times_bottle_neck*n_bottle_neck) == 0: # go back to the top-left box again
                 i = 0
-                cur_x = self.plan_bounds.top_left[0] 
-                cur_y = self.plan_bounds.top_left[1] - split_height
+                if "myhal" in self.map_name:             
+                    cur_x = self.plan_bounds.bottom_left[0] 
+                    cur_y = self.plan_bounds.bottom_left[1] 
+
+                else:
+                
+                    cur_x = self.plan_bounds.top_left[0] 
+                    cur_y = self.plan_bounds.top_left[1] - split_height
             
             
             # ############ if you want to see sampling points 
-            # self.window.add_point(
-            #     map_frame_point=point,
-            #     radius=2,
-            #     color=(255, 0, 0),
-            # )
+            self.window.add_point(
+                map_frame_point=point,
+                radius=2,
+                color=(255, 0, 0),
+            )
 
             closest_node_id = self.closest_node(point)
             closest_node = self.nodes[closest_node_id]  # (3, 1)
@@ -749,8 +825,7 @@ class PathPlanner:
             trajectory_o = self.connect_node_to_point(
                 closest_node, point.reshape(2)
             )  # (100,3)
-            if trajectory_o is None:
-                print("collision detected") 
+            if trajectory_o is None: 
                 continue
 
             # If no collision, Add the new node
@@ -769,11 +844,18 @@ class PathPlanner:
             )
 
             ####### searching for a specific point location 
-            # self.window.add_point(
-            #     map_frame_point=np.array([39,-43]),
-            #     radius=2,
-            #     color=(0, 0, 255),
-            # )
+            if "myhal" in self.map_name: # start point 
+                self.window.add_point(
+                    map_frame_point=np.array([0.2,5.7]),
+                    radius=10,
+                    color=(0, 0, 255),
+                )
+            # else:
+            #     self.window.add_point(
+            #         map_frame_point=np.array([0.2,5.7]),
+            #         radius=10,
+            #         color=(0, 0, 255),
+            #     )
             
             new_node_id = len(self.nodes) - 1
             closest_node.children_ids.append(new_node_id)
