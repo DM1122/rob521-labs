@@ -4,7 +4,6 @@ import pytest
 from pathlib import Path
 import time
 
-
 def test_willow_test_init():
     """Test constructor"""
     sut = PathPlanner(
@@ -500,12 +499,11 @@ def test_rrt_willow_planning():
 
     if nodes == None:
         print("None projectory")
-
+    
     print(f"total time: {time.time() - start_time }")
     time.sleep(30)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
-
 
 def test_rrt_myhal_planning():
     """Test constructor"""
@@ -525,7 +523,7 @@ def test_rrt_myhal_planning():
     time.sleep(30)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
-
+    
 
 def test_find_near_nodes():
     sut = PathPlanner(
@@ -571,7 +569,6 @@ def test_is_ancestor():
     assert sut.is_ancestor(node3, 1) == False
 
 
-@pytest.mark.skip()
 def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
