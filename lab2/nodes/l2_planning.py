@@ -926,97 +926,16 @@ class PathPlanner:
         RRT*'s "anytime" capability.
         """
         goal = self.goal_point
-        i = 0;
-        if "willow" in self.map_name:
-            ############ willow map setting, hyperparameter 
-            n_split = 10
-            ##########################
-
-            split_width = self.plan_bounds.width // n_split 
-            split_height = self.plan_bounds.height // n_split
-            
-            reset_timing = n_split * n_split 
-
-            cur_y = self.plan_bounds.top_left[1] - split_height
-            cur_x = self.plan_bounds.top_left[0] 
-        elif "myhal" in self.map_name:
-            # myhal from left-bottom to right-top 
-            ############ myhal map setting, hyperparameter 
-            n_split = 2
-            ##########################
-            split_width = self.plan_bounds.width / n_split 
-            split_height = self.plan_bounds.height / n_split
-            reset_timing = n_split * n_split 
-
-            cur_y = self.plan_bounds.bottom_left[1]
-            cur_x = self.plan_bounds.bottom_left[0] 
-            
-        else:
-            ############ normal map setting 
-            n_split = 5
-            ##########################
-            split_width = self.plan_bounds.width / n_split 
-            split_height = self.plan_bounds.height / n_split
-            cur_y = self.plan_bounds.top_left[1] - split_height
-            cur_x = self.plan_bounds.top_left[0] 
-            reset_timing = n_split * n_split 
-
-            cur_y = self.plan_bounds.top_left[1] - split_height
-            cur_x = self.plan_bounds.top_left[0] 
         
         while True:
-            if "willow" in self.map_name:
-                # adjust the sampling bounding boxes 
-                # RectBounds(x=-5, y=-47, width=55, height=60)
-                if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
-                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                            y=cur_y,\
-                                            width=split_width, height=split_height)
-                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                    cur_y = cur_y - split_height
-                    cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
-                            y= cur_y,\
-                            width=split_width, height=split_height)
-            elif "myhal" in self.map_name:
-                # adjust the sampling bounding boxes 
-                if i == 0 or (i % n_split != 0 and i < reset_timing): # move along the x-axis
-                 
-                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                            y=cur_y,\
-                                            width=split_width, height=split_height)
-                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                    cur_y = cur_y + split_height
-                    cur_bounds = RectBounds(x=self.plan_bounds.bottom_left[0],\
-                            y= cur_y,\
-                            width=split_width, height=split_height)
-            
-            else:
-                # adjust the sampling bounding boxes 
-                if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
-                 
-                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                            y=cur_y,\
-                                            width=split_width, height=split_height)
-                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                    cur_y = cur_y - split_height
-                    cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
-                            y= cur_y,\
-                            width=split_width, height=split_height)
 
             # Sample
-            new_point = self.sample_map_space(cur_bounds)
-            i += 1;
-            print(i)
-            if i == reset_timing: # go back to the top-left box again
-                i = 0
-                if "myhal" in self.map_name:             
-                    cur_x = self.plan_bounds.bottom_left[0] 
-                    cur_y = self.plan_bounds.bottom_left[1] 
-
-                else:
-                
-                    cur_x = self.plan_bounds.top_left[0] 
-                    cur_y = self.plan_bounds.top_left[1] - split_height
+            new_point = self.sample_map_space(self.)
+            self.window.add_point(
+                map_frame_point=new_point,
+                radius=1,
+                color=(255, 0, 0),
+            )
             
             # # Find closest node
             closest_node_id = self.closest_node(new_point)
@@ -1036,11 +955,7 @@ class PathPlanner:
                 [],
             )
             self.nodes.append(new_node)
-            self.window.add_point(
-                map_frame_point=new_node.point[:2],
-                radius=2,
-                color=(255, 0, 0),
-            )
+
             closest_node.children_ids.append(len(self.nodes) - 1)
 
             curr_node_id = len(self.nodes) - 1
