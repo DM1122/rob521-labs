@@ -15,7 +15,7 @@ the triangle on top-left spot is the starting node and the blue cicle on the bot
 ### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. (David)
 
 ### 4. Algorithm descriptions (Daye + Davin)
-### RRT Planning Algorithm (Daye)
+#### RRT Planning Algorithm (Daye)
 
 1. **Sample a Random Point**
    - Adjusted sampling strategy tailored to the 'Willow Garage Map':
@@ -42,6 +42,7 @@ the triangle on top-left spot is the starting node and the blue cicle on the bot
 
 
 ## Part B: Real Environment Deployment
+(incomplete)
 
 1. See `trajectory-rollout.mp4` for footage of the robot conducting trajectory rollout using RRT in the new Myhal map.
 2. Open-loop demonstration conducted during lab session
