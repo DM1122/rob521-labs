@@ -911,101 +911,14 @@ class PathPlanner:
 
     def rrt_star_planning(self):
         """
-        Performs RRT* for the given map and robot. Currently performing a while loop, can be replaced with an iterative process to make use of
-        RRT*'s "anytime" capability.
+        Performs RRT* for the given map and robot. Currently performing a while loop, 
+        can be replaced with an iterative process to make use of RRT*'s "anytime" capability.
         """
         goal = self.goal_point
-        i = 0;
-        if "willow" in self.map_name:
-            ############ willow map setting, hyperparameter 
-            n_split = 10
-            ##########################
-
-            split_width = self.plan_bounds.width // n_split 
-            split_height = self.plan_bounds.height // n_split
-            
-            reset_timing = n_split * n_split 
-
-            cur_y = self.plan_bounds.top_left[1] - split_height
-            cur_x = self.plan_bounds.top_left[0] 
-        elif "myhal" in self.map_name:
-            # myhal from left-bottom to right-top 
-            ############ myhal map setting, hyperparameter 
-            n_split = 2
-            ##########################
-            split_width = self.plan_bounds.width / n_split 
-            split_height = self.plan_bounds.height / n_split
-            reset_timing = n_split * n_split 
-
-            cur_y = self.plan_bounds.bottom_left[1]
-            cur_x = self.plan_bounds.bottom_left[0] 
-            
-        else:
-            ############ normal map setting 
-            n_split = 5
-            ##########################
-            split_width = self.plan_bounds.width / n_split 
-            split_height = self.plan_bounds.height / n_split
-            cur_y = self.plan_bounds.top_left[1] - split_height
-            cur_x = self.plan_bounds.top_left[0] 
-            reset_timing = n_split * n_split 
-
-            cur_y = self.plan_bounds.top_left[1] - split_height
-            cur_x = self.plan_bounds.top_left[0] 
         
         while True:
-            if "willow" in self.map_name:
-                # adjust the sampling bounding boxes 
-                # RectBounds(x=-5, y=-47, width=55, height=60)
-                if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
-                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                            y=cur_y,\
-                                            width=split_width, height=split_height)
-                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                    cur_y = cur_y - split_height
-                    cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
-                            y= cur_y,\
-                            width=split_width, height=split_height)
-            elif "myhal" in self.map_name:
-                # adjust the sampling bounding boxes 
-                if i == 0 or (i % n_split != 0 and i < reset_timing): # move along the x-axis
-                 
-                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                            y=cur_y,\
-                                            width=split_width, height=split_height)
-                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                    cur_y = cur_y + split_height
-                    cur_bounds = RectBounds(x=self.plan_bounds.bottom_left[0],\
-                            y= cur_y,\
-                            width=split_width, height=split_height)
-            
-            else:
-                # adjust the sampling bounding boxes 
-                if (i % n_split != 0 and i < reset_timing) or i ==0: # move along the x-axis
-                 
-                    cur_bounds = RectBounds(x=cur_x + split_width*(i%n_split),\
-                                            y=cur_y,\
-                                            width=split_width, height=split_height)
-                elif i % n_split == 0 and i <reset_timing: # move along the y-axis by "one" unit box 
-                    cur_y = cur_y - split_height
-                    cur_bounds = RectBounds(x=self.plan_bounds.top_left[0] + split_width*(i%n_split),\
-                            y= cur_y,\
-                            width=split_width, height=split_height)
-
             # Sample
-            new_point = self.sample_map_space(cur_bounds)
-            i += 1;
-            print(i)
-            if i == reset_timing: # go back to the top-left box again
-                i = 0
-                if "myhal" in self.map_name:             
-                    cur_x = self.plan_bounds.bottom_left[0] 
-                    cur_y = self.plan_bounds.bottom_left[1] 
-
-                else:
-                
-                    cur_x = self.plan_bounds.top_left[0] 
-                    cur_y = self.plan_bounds.top_left[1] - split_height
+            new_point = self.sample_map_space(self.plan_bounds)
             
             # # Find closest node
             closest_node_id = self.closest_node(new_point)
@@ -1025,11 +938,13 @@ class PathPlanner:
                 [],
             )
             self.nodes.append(new_node)
+            
             self.window.add_point(
-                map_frame_point=new_node.point[:2],
-                radius=2,
+                map_frame_point=np.array(new_node.point[:2]),
+                radius=1,
                 color=(255, 0, 0),
             )
+
             closest_node.children_ids.append(len(self.nodes) - 1)
 
             curr_node_id = len(self.nodes) - 1
@@ -1037,77 +952,95 @@ class PathPlanner:
 
             """Last node rewiring, treats the new node as a child and finds the best parent"""
 
-            # Find list of near node IDs within the ball radius
-            near_nodes = self.find_near_nodes(curr_node.point)
-            for near_node_id in near_nodes:
-                if curr_node.parent_id == near_node_id:
-                    continue  # Skip if we are checking for existing connection
-                near_node = self.nodes[near_node_id]
-                new_trajectory = self.connect_node_to_point(
-                    near_node, curr_node.point[:-1]
-                )  # near_node ---> curr_node
-                if new_trajectory is None:
-                    continue  # Skip if collision is detected for this node
+            # # Find list of near node IDs within the ball radius
+            # near_nodes = self.find_near_nodes(curr_node.point)
+            # for near_node_id in near_nodes:
+            #     if curr_node.parent_id == near_node_id:
+            #         continue  # Skip if we are checking for existing connection
+            #     near_node = self.nodes[near_node_id]
+            #     new_trajectory = self.connect_node_to_point(
+            #         near_node, curr_node.point[:-1]
+            #     )  # near_node ---> curr_node
+            #     if new_trajectory is None:
+            #         continue  # Skip if collision is detected for this node
 
-                new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
-                if new_trajectory_cost < curr_node.cost:
-                    curr_node.cost = new_trajectory_cost  # update cost of current node
-                    self.nodes[curr_node.parent_id].children_ids.remove(
-                        curr_node_id
-                    )  # remove current node as a child of its current parent
-                    curr_node.parent_id = (
-                        near_node_id  # update new parent of current node
-                    )
-                    near_node.children_ids.append(
-                        curr_node_id
-                    )  # add current node as a child of the new parent
+            #     new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
+            #     if new_trajectory_cost < curr_node.cost:
+            #         curr_node.cost = new_trajectory_cost  # update cost of current node
+            #         self.nodes[curr_node.parent_id].children_ids.remove(
+            #             curr_node_id
+            #         )  # remove current node as a child of its current parent
+            #         curr_node.parent_id = (
+            #             near_node_id  # update new parent of current node
+            #         )
+            #         near_node.children_ids.append(
+            #             curr_node_id
+            #         )  # add current node as a child of the new parent
 
-            """Near edge rewiring, treats the new node as a parent and checks for potential children"""
-            rewire_accomplished = True
-            # while rewire_accomplished:
-            for i in range(5):  # for pytest
-                rewire_accomplished = False  # flag to check for rewiring
+            # """Near edge rewiring, treats the new node as a parent and checks for potential children"""
+            # for _ in range(5):
+            #     near_nodes = self.find_near_nodes(curr_node.point)
+            #     for near_node_id in near_nodes:
+            #         if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
+            #             continue  # Skip if near node is an ancestor of current node
+            #         near_node = self.nodes[near_node_id]
+            #         new_trajectory = self.connect_node_to_point(
+            #             curr_node, near_node.point[:-1]
+            #         )  # curr_node ---> near_node
+            #         if new_trajectory is None:
+            #             continue  # Skip if collision is detected for this node
 
-                near_nodes = self.find_near_nodes(curr_node.point)
-                for near_node_id in near_nodes:
-                    if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
-                        continue  # Skip if near node is an ancestor of current node
-                    near_node = self.nodes[near_node_id]
-                    new_trajectory = self.connect_node_to_point(
-                        curr_node, near_node.point[:-1]
-                    )  # curr_node ---> near_node
-                    if new_trajectory is None:
-                        continue  # Skip if collision is detected for this node
+            #         new_trajectory_cost = (
+            #             self.cost_to_come(new_trajectory) + curr_node.cost
+            #         )
 
-                    new_trajectory_cost = (
-                        self.cost_to_come(new_trajectory) + curr_node.cost
-                    )
-
-                    if new_trajectory_cost < near_node.cost:
-                        delta = near_node.cost - new_trajectory_cost
-                        near_node.cost = new_trajectory_cost  # update cost of near node
-                        self.nodes[near_node.parent_id].children_ids.remove(
-                            near_node_id
-                        )  # remove near node as a child of its parent
-                        near_node.parent_id = (
-                            curr_node_id  # update new parent of near node
-                        )
-                        curr_node.children_ids.append(
-                            near_node_id
-                        )  # add near node as a child of the current node
-                        self.update_children(
-                            near_node_id, delta
-                        )  # update the children costs
-                        curr_node = near_node  # set the near node as the new current node to test
-                        curr_node_id = near_node_id
-                        rewire_accomplished = True  # update flag
-                        break
+            #         if new_trajectory_cost < near_node.cost:
+            #             delta = near_node.cost - new_trajectory_cost
+            #             near_node.cost = new_trajectory_cost  # update cost of near node
+            #             self.nodes[near_node.parent_id].children_ids.remove(
+            #                 near_node_id
+            #             )  # remove near node as a child of its parent
+            #             near_node.parent_id = (
+            #                 curr_node_id  # update new parent of near node
+            #             )
+            #             curr_node.children_ids.append(
+            #                 near_node_id
+            #             )  # add near node as a child of the current node
+            #             self.update_children(
+            #                 near_node_id, delta
+            #             )  # update the children costs
+            #             curr_node = near_node  # set the near node as the new current node to test
+            #             curr_node_id = near_node_id
+            #             break
 
             # Check for early end
             dist_to_goal = np.sqrt(
                 (new_node.point[0] - goal[0]) ** 2 + (new_node.point[1] - goal[1]) ** 2
             )
             if dist_to_goal <= self.stopping_dist:
+                final_node = self.nodes[-1]
+                final_trajectory = [final_node.point]
+
+                # drawing graph for the delivaraible
+                while final_node.parent_id != -1:
+                    final_trajectory = [
+                        self.nodes[final_node.parent_id].point
+                    ] + final_trajectory
+                    final_node = self.nodes[final_node.parent_id]
+            
+                for index, point in enumerate(final_trajectory):
+                    self.window.add_point(
+                        map_frame_point=point[:2],
+                        radius=2,
+                        color=(0, 0, 255),
+                    )
+                    if index < len(final_trajectory) - 1:
+                        self.window.add_line(
+                            point[:2],
+                            final_trajectory[index + 1][:2],
+                            width=1,
+                            color=(0, 0, 255),
+                        )
                 return self.nodes
 
     @beartype
