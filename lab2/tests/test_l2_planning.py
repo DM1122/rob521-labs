@@ -573,10 +573,11 @@ def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([10, 0]),
+        goal_point=np.array([38, -44.75]),
         stopping_dist=0.5,
     )
     nodes = sut.rrt_star_planning()
+    time.sleep(30)
     print(len(nodes))
 
 
