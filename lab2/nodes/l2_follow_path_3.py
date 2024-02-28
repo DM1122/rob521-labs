@@ -237,6 +237,15 @@ class PathFollower:
                     np.abs(last_pose[2] - self.cur_goal[2]),
                 )
 
+                rot_error = (
+                    np.arctan2(
+                        self.cur_goal[1] - last_pose[1], self.cur_goal[0] - last_pose[0]
+                    )
+                    - last_pose[2]
+                )
+                # Normalize the angle_to_target to the range [-pi, pi]
+                # rot_error = (rot_error + np.pi) % (2 * np.pi) - np.pi
+
                 # Calculate costs based on distance to goal and rotation error
                 distance_cost = trans_error  # Assuming distance cost is directly proportional to trans_error
                 rotation_cost = rot_error * ROT_DIST_MULT

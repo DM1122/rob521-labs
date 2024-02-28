@@ -10,9 +10,10 @@ def test_willow_test_init():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([10, 10]),
+        goal_point=np.array([2, -0.5]),
         stopping_dist=0.5,
     )
+    time.sleep(10)
     print(sut)
 
 
