@@ -952,66 +952,66 @@ class PathPlanner:
 
             """Last node rewiring, treats the new node as a child and finds the best parent"""
 
-            # # Find list of near node IDs within the ball radius
-            # near_nodes = self.find_near_nodes(curr_node.point)
-            # for near_node_id in near_nodes:
-            #     if curr_node.parent_id == near_node_id:
-            #         continue  # Skip if we are checking for existing connection
-            #     near_node = self.nodes[near_node_id]
-            #     new_trajectory = self.connect_node_to_point(
-            #         near_node, curr_node.point[:-1]
-            #     )  # near_node ---> curr_node
-            #     if new_trajectory is None:
-            #         continue  # Skip if collision is detected for this node
+            # Find list of near node IDs within the ball radius
+            near_nodes = self.find_near_nodes(curr_node.point)
+            for near_node_id in near_nodes:
+                if curr_node.parent_id == near_node_id:
+                    continue  # Skip if we are checking for existing connection
+                near_node = self.nodes[near_node_id]
+                new_trajectory = self.connect_node_to_point(
+                    near_node, curr_node.point[:-1]
+                )  # near_node ---> curr_node
+                if new_trajectory is None:
+                    continue  # Skip if collision is detected for this node
 
-            #     new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
-            #     if new_trajectory_cost < curr_node.cost:
-            #         curr_node.cost = new_trajectory_cost  # update cost of current node
-            #         self.nodes[curr_node.parent_id].children_ids.remove(
-            #             curr_node_id
-            #         )  # remove current node as a child of its current parent
-            #         curr_node.parent_id = (
-            #             near_node_id  # update new parent of current node
-            #         )
-            #         near_node.children_ids.append(
-            #             curr_node_id
-            #         )  # add current node as a child of the new parent
+                new_trajectory_cost = self.cost_to_come(new_trajectory) + near_node.cost
+                if new_trajectory_cost < curr_node.cost:
+                    curr_node.cost = new_trajectory_cost  # update cost of current node
+                    self.nodes[curr_node.parent_id].children_ids.remove(
+                        curr_node_id
+                    )  # remove current node as a child of its current parent
+                    curr_node.parent_id = (
+                        near_node_id  # update new parent of current node
+                    )
+                    near_node.children_ids.append(
+                        curr_node_id
+                    )  # add current node as a child of the new parent
 
-            # """Near edge rewiring, treats the new node as a parent and checks for potential children"""
-            # for _ in range(5):
-            #     near_nodes = self.find_near_nodes(curr_node.point)
-            #     for near_node_id in near_nodes:
-            #         if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
-            #             continue  # Skip if near node is an ancestor of current node
-            #         near_node = self.nodes[near_node_id]
-            #         new_trajectory = self.connect_node_to_point(
-            #             curr_node, near_node.point[:-1]
-            #         )  # curr_node ---> near_node
-            #         if new_trajectory is None:
-            #             continue  # Skip if collision is detected for this node
+            """Near edge rewiring, treats the new node as a parent and checks for potential children"""
+            for _ in range(5):
+                near_nodes = self.find_near_nodes(curr_node.point)
+                for near_node_id in near_nodes:
+                    if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
+                        continue  # Skip if near node is an ancestor of current node
+                    near_node = self.nodes[near_node_id]
+                    new_trajectory = self.connect_node_to_point(
+                        curr_node, near_node.point[:-1]
+                    )  # curr_node ---> near_node
+                    if new_trajectory is None:
+                        continue  # Skip if collision is detected for this node
 
-            #         new_trajectory_cost = (
-            #             self.cost_to_come(new_trajectory) + curr_node.cost
-            #         )
+                    new_trajectory_cost = (
+                        self.cost_to_come(new_trajectory) + curr_node.cost
+                    )
 
-            #         if new_trajectory_cost < near_node.cost:
-            #             delta = near_node.cost - new_trajectory_cost
-            #             near_node.cost = new_trajectory_cost  # update cost of near node
-            #             self.nodes[near_node.parent_id].children_ids.remove(
-            #                 near_node_id
-            #             )  # remove near node as a child of its parent
-            #             near_node.parent_id = (
-            #                 curr_node_id  # update new parent of near node
-            #             )
-            #             curr_node.children_ids.append(
-            #                 near_node_id
-            #             )  # add near node as a child of the current node
-            #             self.update_children(
-            #                 near_node_id, delta
-            #             )  # update the children costs
-            #             curr_node = near_node  # set the near node as the new current node to test
-            #             curr_node_id = near_node_id
-            #             break
+                    if new_trajectory_cost < near_node.cost:
+                        delta = near_node.cost - new_trajectory_cost
+                        near_node.cost = new_trajectory_cost  # update cost of near node
+                        self.nodes[near_node.parent_id].children_ids.remove(
+                            near_node_id
+                        )  # remove near node as a child of its parent
+                        near_node.parent_id = (
+                            curr_node_id  # update new parent of near node
+                        )
+                        curr_node.children_ids.append(
+                            near_node_id
+                        )  # add near node as a child of the current node
+                        self.update_children(
+                            near_node_id, delta
+                        )  # update the children costs
+                        curr_node = near_node  # set the near node as the new current node to test
+                        curr_node_id = near_node_id
+                        break
 
             # Check for early end
             dist_to_goal = np.sqrt(
