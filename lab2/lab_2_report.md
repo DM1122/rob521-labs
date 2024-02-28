@@ -41,10 +41,10 @@ the triangle on top-left spot is the starting node and the blue cicle on the bot
 
 
 
-## Part B: Real Environment Deployment
+## Part B: Real Environment Deployment (Incomplete)
 
-1. See `trajectory-rollout.mp4` for footage of the robot conducting trajectory rollout using RRT in the new Myhal map.
-2. Open-loop demonstration conducted during lab session
+1. ~~See `trajectory-rollout.mp4` for footage of the robot conducting trajectory rollout using RRT in the new Myhal map.~~
+2. ~~Open-loop demonstration conducted during lab session~~
 
 
 Code is attached
