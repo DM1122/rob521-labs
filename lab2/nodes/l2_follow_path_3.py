@@ -34,12 +34,12 @@ PATH_NAME = "path.npy"  # saved path from l2_planning.py, should be in the same 
 
 # here are some hardcoded paths to use if you want to develop l2_planning and this file in parallel
 # TEMP_HARDCODE_PATH = [[2, 0, 0], [2.75, -1, -np.pi/2], [2.75, -4, -np.pi/2], [2, -4.4, np.pi]]  # almost collision-free
-TEMP_HARDCODE_PATH = [
-    [2, -0.5, 0],
-    [2.4, -1, -np.pi / 2],
-    [2.45, -3.5, -np.pi / 2],
-    [1.5, -4.4, np.pi],
-]  # some possible collisions
+# TEMP_HARDCODE_PATH = [
+#     [2, -0.5, 0],
+#     [2.4, -1, -np.pi / 2],
+#     [2.45, -3.5, -np.pi / 2],
+#     [1.5, -4.4, np.pi],
+# ]  # some possible collisions
 
 
 class PathFollower:
@@ -105,8 +105,8 @@ class PathFollower:
         cur_dir = os.path.dirname(os.path.realpath(__file__))
 
         # to use the temp hardcoded paths above, switch the comment on the following two lines
-        # self.path_tuples = np.load(os.path.join(cur_dir, "path.npy")).T
-        self.path_tuples = np.array(TEMP_HARDCODE_PATH)
+        self.path_tuples = np.load(os.path.join(cur_dir, "path.npy")).T
+        # self.path_tuples = np.array(TEMP_HARDCODE_PATH)
 
         self.path = utils.se2_pose_list_to_path(self.path_tuples, "map")
         self.global_path_pub.publish(self.path)
