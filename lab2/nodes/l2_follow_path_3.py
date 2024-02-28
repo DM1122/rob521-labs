@@ -151,12 +151,19 @@ class PathFollower:
                 self.num_opts, axis=0
             )
 
-            print(
-                "TO DO: Propogate the trajectory forward, storing the resulting points in local_paths!"
-            )
+            # TODO
             for t in range(1, self.horizon_timesteps + 1):
-                # propogate trajectory forward, assuming perfect control of velocity and no dynamic effects
-                pass
+                # Propagate trajectory forward, assuming perfect control of velocity and no dynamic effects
+                for opt in range(self.num_opts):
+                    trans_vel, rot_vel = self.all_opts_scaled[opt]
+                    x, y, theta = local_paths[t - 1, opt]
+                    delta_x = trans_vel * np.cos(theta)
+                    delta_y = trans_vel * np.sin(theta)
+                    delta_theta = rot_vel
+                    new_x = x + delta_x
+                    new_y = y + delta_y
+                    new_theta = theta + delta_theta
+                    local_paths[t, opt] = [new_x, new_y, new_theta]
 
             # check all trajectory points for collisions
             # first find the closest collision point in the map to each local path point
@@ -166,27 +173,93 @@ class PathFollower:
             valid_opts = range(self.num_opts)
             local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50
 
-            print("TO DO: Check the points in local_path_pixels for collisions")
-            for opt in range(local_paths_pixels.shape[1]):
+            # TODO
+            # Initialize valid_opts as a list of all option indices
+            valid_opts = list(range(self.num_opts))
+
+            # Check the points in local_path_pixels for collisions
+            for opt in valid_opts.copy():  # Use a copy of the list for iteration
                 for timestep in range(local_paths_pixels.shape[0]):
-                    pass
+                    x_pix, y_pix = local_paths_pixels[timestep, opt].astype(int)
+                    # Check if the point is within the map bounds and for collisions
+                    if (0 <= x_pix < self.map_np.shape[1]) and (
+                        0 <= y_pix < self.map_np.shape[0]
+                    ):
+                        if self.map_np[y_pix, x_pix] > 0:  # Collision detected
+                            valid_opts.remove(opt)  # Remove this option from valid_opts
+                            break  # No need to check further if collision is found
+                    else:
+                        valid_opts.remove(opt)  # Consider out of bounds as collision
+                        break  # No need to check further
 
-            # remove trajectories that were deemed to have collisions
-            print("TO DO: Remove trajectories with collisions!")
+            # Now valid_opts contains only the indices of options without detected collisions
 
-            # calculate final cost and choose best option
-            print("TO DO: Calculate the final cost and choose the best control option!")
-            final_cost = np.zeros(self.num_opts)
-            if final_cost.size == 0:  # hardcoded recovery if all options have collision
-                control = [-0.1, 0]
-            else:
-                best_opt = valid_opts[final_cost.argmin()]
+            # TODO
+            # Check the points in local_path_pixels for collisions
+            for opt in range(local_paths_pixels.shape[1]):
+                has_collision = False
+                for timestep in range(local_paths_pixels.shape[0]):
+                    # Get the pixel coordinates of the current point in the path
+                    x_pix, y_pix = local_paths_pixels[timestep, opt].astype(int)
+                    # Check if the point is within the map bounds
+                    if (0 <= x_pix < self.map_np.shape[1]) and (
+                        0 <= y_pix < self.map_np.shape[0]
+                    ):
+                        # Check for collision
+                        if self.map_np[y_pix, x_pix] > 0:
+                            has_collision = True
+                            break  # No need to check further if collision is found
+                    else:
+                        has_collision = True
+                        break  # Consider out of bounds as collision
+
+                # If collision is detected, update the collision distance for this option
+                if has_collision:
+                    local_paths_lowest_collision_dist[opt] = 0
+
+            # Remove trajectories with collisions
+            valid_opts = [
+                opt
+                for opt in range(self.num_opts)
+                if local_paths_lowest_collision_dist[opt] > 0
+            ]
+
+            # TODO
+            # Calculate the final cost and choose the best control option
+            final_cost = np.full(self.num_opts, np.inf)  # Initialize with infinity
+
+            for opt in valid_opts:
+                # Calculate cost for each trajectory
+                last_pose = local_paths[-1, opt]
+                trans_error = np.linalg.norm(last_pose[:2] - self.cur_goal[:2])
+                rot_error = min(
+                    np.pi * 2 - np.abs(last_pose[2] - self.cur_goal[2]),
+                    np.abs(last_pose[2] - self.cur_goal[2]),
+                )
+
+                # Calculate costs based on distance to goal and rotation error
+                distance_cost = trans_error  # Assuming distance cost is directly proportional to trans_error
+                rotation_cost = rot_error * ROT_DIST_MULT
+                obstacle_cost = OBS_DIST_MULT / local_paths_lowest_collision_dist[opt]
+
+                # Sum up the costs
+                final_cost[opt] = distance_cost + rotation_cost + obstacle_cost
+
+            # Find the option with the lowest cost
+            if np.min(final_cost) < np.inf:  # Check if there is a feasible option
+                best_opt = np.argmin(final_cost)
                 control = self.all_opts[best_opt]
                 self.local_path_pub.publish(
                     utils.se2_pose_list_to_path(local_paths[:, best_opt], "map")
                 )
+            else:
+                # Hardcoded recovery if all options have collision or are infeasible
+                control = [-0.1, 0]
 
-            # send command to robot
+            # Send the chosen control to the robot
+            self.cmd_pub.publish(utils.unicyle_vel_to_twist(control))
+
+            # Send the chosen control to the robot
             self.cmd_pub.publish(utils.unicyle_vel_to_twist(control))
 
             # uncomment out for debugging if necessary
