@@ -232,10 +232,10 @@ class PathFollower:
                 # Calculate cost for each trajectory
                 last_pose = local_paths[-1, opt]
                 trans_error = np.linalg.norm(last_pose[:2] - self.cur_goal[:2])
-                rot_error = min(
-                    np.pi * 2 - np.abs(last_pose[2] - self.cur_goal[2]),
-                    np.abs(last_pose[2] - self.cur_goal[2]),
-                )
+                # rot_error = min(
+                #     np.pi * 2 - np.abs(last_pose[2] - self.cur_goal[2]),
+                #     np.abs(last_pose[2] - self.cur_goal[2]),
+                # )
 
                 rot_error = (
                     np.arctan2(
@@ -244,7 +244,7 @@ class PathFollower:
                     - last_pose[2]
                 )
                 # Normalize the angle_to_target to the range [-pi, pi]
-                # rot_error = (rot_error + np.pi) % (2 * np.pi) - np.pi
+                rot_error = (rot_error + np.pi) % (2 * np.pi) - np.pi
 
                 # Calculate costs based on distance to goal and rotation error
                 distance_cost = trans_error  # Assuming distance cost is directly proportional to trans_error
