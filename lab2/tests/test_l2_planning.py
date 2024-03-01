@@ -4,12 +4,13 @@ import pytest
 from pathlib import Path
 import time
 
+
 def test_willow_test_init():
     """Test constructor"""
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([10, 10]),
+        goal_point=np.array([2, -0.5]),
         stopping_dist=0.5,
     )
     time.sleep(10)
@@ -45,7 +46,6 @@ def test_sample_map_space(bounds):
     for i in range(10):
         point = sut.sample_map_space(bounds)
         print(point)
-    time.sleep(10)
     # Assert that the point lies within the given bounds
     assert bounds.x <= point[0] <= bounds.x + bounds.width
     assert bounds.y <= point[1] <= bounds.y + bounds.height
@@ -499,11 +499,11 @@ def test_rrt_willow_planning():
 
     if nodes == None:
         print("None projectory")
-    
+
     print(f"total time: {time.time() - start_time }")
-    time.sleep(30)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
+
 
 def test_rrt_myhal_planning():
     """Test constructor"""
@@ -520,10 +520,9 @@ def test_rrt_myhal_planning():
     if nodes == None:
         print("None projectory")
     print(f"total time: {time.time() - start_time }")
-    time.sleep(30)
     assert isinstance(nodes, list)  # Check if 'nodes' is a list
     assert len(nodes) > 0  # Check if 'nodes' has at least one element
-    
+
 
 def test_find_near_nodes():
     sut = PathPlanner(
@@ -573,7 +572,7 @@ def test_rrt_star_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([10, 0.5]),
+        goal_point=np.array([38, -44.75]),
         stopping_dist=0.5,
     )
     nodes = sut.rrt_star_planning()

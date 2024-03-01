@@ -1,4 +1,8 @@
 *.pyc
 *.ipynb
 daye_l2_planning.py
+<<<<<<< HEAD
 *.txt
+=======
+*.mp4
+>>>>>>> 2b77fb1e98f842b094ec8280dfd8bf563869a2c5

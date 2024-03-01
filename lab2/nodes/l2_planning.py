@@ -911,14 +911,15 @@ class PathPlanner:
 
     def rrt_star_planning(self):
         """
-        Performs RRT* for the given map and robot. Currently performing a while loop, can be replaced with an iterative process to make use of
-        RRT*'s "anytime" capability.
+        Performs RRT* for the given map and robot. Currently performing a while loop, 
+        can be replaced with an iterative process to make use of RRT*'s "anytime" capability.
         """
         goal = self.goal_point
+        
         while True:
             # Sample
             new_point = self.sample_map_space(self.plan_bounds)
-
+            
             # # Find closest node
             closest_node_id = self.closest_node(new_point)
             closest_node = self.nodes[closest_node_id]
@@ -937,11 +938,13 @@ class PathPlanner:
                 [],
             )
             self.nodes.append(new_node)
+            
             self.window.add_point(
-                map_frame_point=new_node.point[:2],
-                radius=2,
+                map_frame_point=np.array(new_node.point[:2]),
+                radius=1,
                 color=(255, 0, 0),
             )
+
             closest_node.children_ids.append(len(self.nodes) - 1)
 
             curr_node_id = len(self.nodes) - 1
@@ -975,11 +978,7 @@ class PathPlanner:
                     )  # add current node as a child of the new parent
 
             """Near edge rewiring, treats the new node as a parent and checks for potential children"""
-            rewire_accomplished = True
-            # while rewire_accomplished:
-            for i in range(5):  # for pytest
-                rewire_accomplished = False  # flag to check for rewiring
-
+            for _ in range(5):
                 near_nodes = self.find_near_nodes(curr_node.point)
                 for near_node_id in near_nodes:
                     if self.is_ancestor(curr_node, near_node_id) or near_node_id == -1:
@@ -1012,7 +1011,6 @@ class PathPlanner:
                         )  # update the children costs
                         curr_node = near_node  # set the near node as the new current node to test
                         curr_node_id = near_node_id
-                        rewire_accomplished = True  # update flag
                         break
 
             # Check for early end
@@ -1020,6 +1018,29 @@ class PathPlanner:
                 (new_node.point[0] - goal[0]) ** 2 + (new_node.point[1] - goal[1]) ** 2
             )
             if dist_to_goal <= self.stopping_dist:
+                final_node = self.nodes[-1]
+                final_trajectory = [final_node.point]
+
+                # drawing graph for the delivaraible
+                while final_node.parent_id != -1:
+                    final_trajectory = [
+                        self.nodes[final_node.parent_id].point
+                    ] + final_trajectory
+                    final_node = self.nodes[final_node.parent_id]
+            
+                for index, point in enumerate(final_trajectory):
+                    self.window.add_point(
+                        map_frame_point=point[:2],
+                        radius=2,
+                        color=(0, 0, 255),
+                    )
+                    if index < len(final_trajectory) - 1:
+                        self.window.add_line(
+                            point[:2],
+                            final_trajectory[index + 1][:2],
+                            width=1,
+                            color=(0, 0, 255),
+                        )
                 return self.nodes
 
     @beartype
