@@ -511,7 +511,7 @@ def test_rrt_myhal_planning():
     sut = PathPlanner(
         map_file_path=Path("maps/myhal.png"),
         map_settings_path=Path("maps/myhal.yaml"),
-        goal_point=np.array([2, 6]),
+        goal_point=np.array([2, 7.3]),
         stopping_dist=0.05,
     )
     start_time = time.time()
@@ -569,10 +569,11 @@ def test_is_ancestor():
 
 
 def test_rrt_star_planning():
+    # real goal = [43, -43.6]
     sut = PathPlanner(
         map_file_path=Path("maps/willowgarageworld_05res.png"),
         map_settings_path=Path("maps/willowgarageworld_05res.yaml"),
-        goal_point=np.array([38, -44.75]),
+        goal_point=np.array([38, -44.75]), 
         stopping_dist=0.5,
     )
     nodes = sut.rrt_star_planning()
