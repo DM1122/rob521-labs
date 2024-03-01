@@ -70,6 +70,7 @@ Red dots on the figure represent valid points without collision and blue dots co
 1. ~~See `trajectory-rollout.mp4` for footage of the robot conducting trajectory rollout using RRT in the new Myhal map.~~
 2. ~~Open-loop demonstration conducted during lab session~~
 
+## Code 
 
 Please refer to the folowing github repository for the code 
 - https://github.com/DM1122/rob521-labs/tree/main/lab2 
