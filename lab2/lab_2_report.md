@@ -15,7 +15,7 @@ the triangle on top-left spot is the starting node and the blue cicle on the bot
 | A rrt* planning output figure
 Red dots on the figure represent valid points without collision and blue dots conntected by blue lines represent a final trajectory from the start point (top-left) to the end point (bottom-right) |
 
-### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. (David)
+### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. 
 
 - Please refer to the attached video `trajectory-rollout-sim.mp4`.
 ### 4. Algorithm descriptions
@@ -71,4 +71,5 @@ Red dots on the figure represent valid points without collision and blue dots co
 2. ~~Open-loop demonstration conducted during lab session~~
 
 
-Code is attached
+Please refer to the folowing github repository for the code 
+- https://github.com/DM1122/rob521-labs/tree/main/lab2 
