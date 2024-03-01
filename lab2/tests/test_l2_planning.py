@@ -579,6 +579,16 @@ def test_rrt_star_planning():
     nodes = sut.rrt_star_planning()
     print(len(nodes))
 
+def test_myhal_rrt_star_planning():
+    sut = PathPlanner(
+        map_file_path=Path("maps/myhal.png"),
+        map_settings_path=Path("maps/myhal.yaml"),
+        goal_point=np.array([0, 7]),
+        stopping_dist=0.5,
+    )
+    nodes = sut.rrt_star_planning()
+    print(len(nodes))
+
 
 def test_recover_path():
     sut = PathPlanner(
