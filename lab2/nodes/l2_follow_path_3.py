@@ -151,9 +151,9 @@ class PathFollower:
                 self.num_opts, axis=0
             )
 
-            # TODO
+
             for t in range(1, self.horizon_timesteps + 1):
-                # Propagate trajectory forward, assuming perfect control of velocity and no dynamic effects
+                # propagate trajectory forward, assuming perfect control of velocity and no dynamic effects
                 for opt in range(self.num_opts):
                     trans_vel, rot_vel = self.all_opts_scaled[opt]
                     x, y, theta = local_paths[t - 1, opt]
@@ -173,11 +173,11 @@ class PathFollower:
             valid_opts = range(self.num_opts)
             local_paths_lowest_collision_dist = np.ones(self.num_opts) * 50
 
-            # TODO
-            # Initialize valid_opts as a list of all option indices
+
+            # initialize valid_opts as a list of all option indices
             valid_opts = list(range(self.num_opts))
 
-            # Check the points in local_path_pixels for collisions
+            # check the points in local_path_pixels for collisions
             for opt in valid_opts.copy():  # Use a copy of the list for iteration
                 for timestep in range(local_paths_pixels.shape[0]):
                     x_pix, y_pix = local_paths_pixels[timestep, opt].astype(int)
@@ -192,10 +192,10 @@ class PathFollower:
                         valid_opts.remove(opt)  # Consider out of bounds as collision
                         break  # No need to check further
 
-            # Now valid_opts contains only the indices of options without detected collisions
+            # now valid_opts contains only the indices of options without detected collisions
 
-            # TODO
-            # Check the points in local_path_pixels for collisions
+
+            # check the points in local_path_pixels for collisions
             for opt in range(local_paths_pixels.shape[1]):
                 has_collision = False
                 for timestep in range(local_paths_pixels.shape[0]):
@@ -217,15 +217,15 @@ class PathFollower:
                 if has_collision:
                     local_paths_lowest_collision_dist[opt] = 0
 
-            # Remove trajectories with collisions
+            # remove trajectories with collisions
             valid_opts = [
                 opt
                 for opt in range(self.num_opts)
                 if local_paths_lowest_collision_dist[opt] > 0
             ]
 
-            # TODO
-            # Calculate the final cost and choose the best control option
+
+            # calculate the final cost and choose the best control option
             final_cost = np.full(self.num_opts, np.inf)  # Initialize with infinity
 
             for opt in valid_opts:
@@ -243,15 +243,15 @@ class PathFollower:
                     )
                     - last_pose[2]
                 )
-                # Normalize the angle_to_target to the range [-pi, pi]
+                # normalize the angle_to_target to the range [-pi, pi]
                 rot_error = (rot_error + np.pi) % (2 * np.pi) - np.pi
 
-                # Calculate costs based on distance to goal and rotation error
+                # calculate costs based on distance to goal and rotation error
                 distance_cost = trans_error  # Assuming distance cost is directly proportional to trans_error
                 rotation_cost = rot_error * ROT_DIST_MULT
                 obstacle_cost = OBS_DIST_MULT / local_paths_lowest_collision_dist[opt]
 
-                # Sum up the costs
+                # sum up the costs
                 final_cost[opt] = distance_cost + rotation_cost + obstacle_cost
 
             # Find the option with the lowest cost
@@ -265,10 +265,10 @@ class PathFollower:
                 # Hardcoded recovery if all options have collision or are infeasible
                 control = [-0.1, 0]
 
-            # Send the chosen control to the robot
+            # send the chosen control to the robot
             self.cmd_pub.publish(utils.unicyle_vel_to_twist(control))
 
-            # Send the chosen control to the robot
+            # send the chosen control to the robot
             self.cmd_pub.publish(utils.unicyle_vel_to_twist(control))
 
             # uncomment out for debugging if necessary
