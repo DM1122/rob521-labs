@@ -2,24 +2,25 @@
 
 ## Part A: Simulation
 
-### 1. See the following figure demonstrating successful output from RRT (Daye)
+### 1. See the following figure demonstrating successful output from RRT
 
 | ![rrt_planning](./results/rrt_planning.png)|
 | :--: |
-| A rrt planning figure
+| A rrt planning output figure
 the triangle on top-left spot is the starting node and the blue cicle on the bottom-right spot is the our goal point. All green circles are the nodes that are collision-free and the blue circles connected by blue lines consists of the final trajectory of the robot. |
 
-### 2. See the following figure illustrating successful output from RRT* (Davin)
+### 2. See the following figure illustrating successful output from RRT*
 |![rrt_star_planning](./results/rrt_star_planning.png)|
 | :--: |
-The start point is the first blue point in the top-left of the map and the goal is the large blue circle in the bottom-right of the map.. Valid nodes that are part of the tree are displayed as red points. The final solution found to the goal is displayed as the path made up by all the blue points.
+The start point is the first blue point in the top-left of the map and the goal is the large blue circle in the bottom-right of the map. Valid nodes that are part of the tree are displayed as red points. The final solution found to the goal is displayed as the path made up by all the blue points.
 
-### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. (David)
+### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. 
 
-### 4. Algorithm descriptions (Daye + Davin)
-### RRT Planning Algorithm (Daye)
+- Please refer to the attached video `trajectory-rollout-sim.mp4`.
+### 4. Algorithm descriptions
+#### RRT Planning Algorithm
 
-1. **Sample a Random Point**
+1. Sample a Random Point
    - Adjusted sampling strategy tailored to the 'Willow Garage Map':
      - Split the map into 10x10 small boxes and iterate over them from left to right and top to bottom.
      - Due to bottleneck regions with low visibility in the "Willow" map:
@@ -38,7 +39,9 @@ The start point is the first blue point in the top-left of the map and the goal 
          - Add endpoint.
          - Add path from the nearest node to the endpoint.
 
-4. Return Success/Failure and Current Tree.
+4. Sampling and connecting nodes will repeat until the end point has been reached and successfully connected to. 
+   
+5. Return Success/Failure and the current tree.
 
 #### RRT* Planning Algorithm
 
@@ -66,5 +69,7 @@ The start point is the first blue point in the top-left of the map and the goal 
 1. ~~See `trajectory-rollout.mp4` for footage of the robot conducting trajectory rollout using RRT in the new Myhal map.~~
 2. ~~Open-loop demonstration conducted during lab session~~
 
+## Code 
 
-Code is attached
+Please refer to the folowing github repository for the code 
+- https://github.com/DM1122/rob521-labs/tree/main/lab2 
