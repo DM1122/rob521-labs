@@ -12,8 +12,7 @@ the triangle on top-left spot is the starting node and the blue cicle on the bot
 ### 2. See the following figure illustrating successful output from RRT*
 |![rrt_star_planning](./results/rrt_star_planning.png)|
 | :--: |
-| A rrt* planning output figure
-Red dots on the figure represent valid points without collision and blue dots conntected by blue lines represent a final trajectory from the start point (top-left) to the end point (bottom-right) |
+The start point is the first blue point in the top-left of the map and the goal is the large blue circle in the bottom-right of the map. Valid nodes that are part of the tree are displayed as red points. The final solution found to the goal is displayed as the path made up by all the blue points.
 
 ### 3. See `trajectory-rollout-sim.mp4` for footage demonstrating a successful run of the trajectory rollout using RRT. 
 
