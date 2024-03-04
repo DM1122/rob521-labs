@@ -931,6 +931,13 @@ class PathPlanner:
             # Sample
             new_point = self.sample_map_space(self.plan_bounds)
 
+            # ############ if you want to see sampling points 
+            # self.window.add_point(
+            #     map_frame_point=new_point,
+            #     radius=2,
+            #     color=(255, 0, 0),
+            # )
+
             # # Find closest node
             closest_node_id = self.closest_node(new_point)
             closest_node = self.nodes[closest_node_id]
@@ -953,7 +960,7 @@ class PathPlanner:
             self.window.add_point(
                 map_frame_point=np.array(new_node.point[:2]),
                 radius=1,
-                color=(255, 0, 0),
+                color=(0, 255, 0),
             )
 
             closest_node.children_ids.append(len(self.nodes) - 1)
