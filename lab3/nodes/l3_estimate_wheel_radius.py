@@ -89,19 +89,11 @@ class wheelRadiusEstimator:
             print(self.del_right_encoder)
             print(self.left_encoder_prev)
             print(self.right_encoder_prev)
-            radius = 2 * (
-                DRIVEN_DISTANCE / (self.del_left_encoder + self.del_right_encoder)
-            )
 
-            radius_2 = 2 * (
-                DRIVEN_DISTANCE
-                / (
-                    (self.del_left_encoder + self.del_right_encoder)
-                    / TICKS_PER_ROTATION
-                )
-            )
+            average_ticks = (self.del_left_encoder + self.del_right_encoder) / 2
+            radius = DRIVEN_DISTANCE / (average_ticks / TICKS_PER_ROTATION * 2 * np.pi)
+
             print("Calibrated Radius: {} m".format(radius))
-            print("Calibrated Radius2: {} m".format(radius_2))
 
             # Reset the robot and calibration routine
             self.lock.acquire()
