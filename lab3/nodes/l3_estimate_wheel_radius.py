@@ -81,7 +81,6 @@ class wheelRadiusEstimator:
 
         elif self.isMoving is True and np.isclose(input_velocity_mag, 0):
             self.isMoving = False  # Set the state to stopped
-            # TODO
             # # YOUR CODE HERE!!!
             # Calculate the radius of the wheel based on encoder measurements
 
