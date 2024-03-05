@@ -86,13 +86,13 @@ class wheelBaselineEstimator:
             self.isMoving = False  # Set the state to stopped
             # Calculate the separation of the wheels based on encoder measurements
 
-            diff = (
-                ((self.del_right_encoder - self.del_left_encoder) / 2)
-                / TICKS_PER_ROTATION
-                * 2
-                * np.pi
+            left_distance = (
+                (self.del_left_encoder / TICKS_PER_ROTATION) * 2 * np.pi * WHEEL_RADIUS
             )
-            separation = WHEEL_RADIUS * diff / (NUM_ROTATIONS * 2 * np.pi)
+            right_distance = (
+                (self.del_right_encoder / TICKS_PER_ROTATION) * 2 * np.pi * WHEEL_RADIUS
+            )
+            separation = (right_distance - left_distance) / (NUM_ROTATIONS * 2 * np.pi)
             print("Calibrated Separation: {} m".format(separation))
 
             # Reset the robot and calibration routine
