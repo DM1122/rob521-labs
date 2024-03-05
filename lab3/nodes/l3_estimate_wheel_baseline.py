@@ -6,6 +6,7 @@ import threading
 from turtlebot3_msgs.msg import SensorState
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist
+import time
 
 INT32_MAX = 2**31
 NUM_ROTATIONS = 3
@@ -37,7 +38,11 @@ class wheelBaselineEstimator:
         # Reset the robot
         reset_msg = Empty()
         self.reset_pub.publish(reset_msg)
-        print("Ready to start wheel radius calibration!")
+
+        # publish rotation
+        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+
+        print("Ready to start wheel separation calibration!")
         return
 
     def safeDelPhi(self, a, b):
@@ -79,8 +84,6 @@ class wheelBaselineEstimator:
 
         elif self.isMoving is True and np.isclose(msg.angular.z, 0):
             self.isMoving = False  # Set the state to stopped
-            # TODO
-            # # YOUR CODE HERE!!!
             # Calculate the separation of the wheels based on encoder measurements
 
             diff = (
@@ -105,7 +108,25 @@ class wheelBaselineEstimator:
 
         return
 
+    def rotate_robot(self, angular_velocity):
+        twist_msg = Twist()
+        twist_msg.angular.z = angular_velocity
+        self.cmd_vel_pub.publish(twist_msg)
+
 
 if __name__ == "__main__":
     Estimator = wheelBaselineEstimator()  # create instance
+
+    # Define the angular velocity for rotation (radians per second)
+    angular_velocity = 0.5  # Adjust this value as needed
+
+    # Start rotation
+    Estimator.rotate_robot(angular_velocity)  # TODO: comment out for real deployment
+
+    # Assuming we want each rotation to take 2 seconds, wait for 6 seconds for 3 rotations
+    time.sleep(NUM_ROTATIONS * 2)
+
+    # Stop rotation
+    Estimator.rotate_robot(0)
+
     rospy.spin()
