@@ -5,8 +5,7 @@
 • Design the experiments. How would you drive a robot using teleoperation to deter-
 mined the parameters?
 
-
-
+roslaunch rob521_lab2 willowgarage_world.launch
 
 ## Task 4 (David)
 

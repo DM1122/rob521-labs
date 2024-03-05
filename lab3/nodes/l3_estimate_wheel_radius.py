@@ -85,8 +85,10 @@ class wheelRadiusEstimator:
             # # YOUR CODE HERE!!!
             # Calculate the radius of the wheel based on encoder measurements
 
-            radius = (
-                2 * DRIVEN_DISTANCE / (self.del_left_encoder + self.del_right_encoder)
+            print(self.del_left_encoder)
+            print(self.del_right_encoder)
+            radius = (2 * DRIVEN_DISTANCE) / (
+                self.del_left_encoder + self.del_right_encoder
             )
             print("Calibrated Radius: {} m".format(radius))
 
