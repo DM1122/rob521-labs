@@ -95,6 +95,16 @@ class OccupancyGripMap:
         # YOUR CODE HERE!!! Loop through each measurement in scan_msg to get the correct angle and
         # x_start and y_start to send to your ray_trace_update function.
 
+        ranges = scan_msg.ranges[::SCAN_DOWNSAMPLE]
+        
+        for i, r in enumerate(ranges):
+            if (scan_msg.range_min < r) and (r < scan_msg.range_max):
+                angle = odom_map[2] + SCAN_DOWNSAMPLE * i * scan_msg.angle_increment
+                x_start = odom_map[0] / CELL_SIZE
+                y_start = odom_map[1] / CELL_SIZE
+                range_mes = r / CELL_SIZE
+                self.np_map, self.log_odds = self.ray_trace_update(self.np_map, self.log_odds, x_start, y_start, angle, range_mes)
+        
         # publish the message
         self.map_msg.info.map_load_time = rospy.Time.now()
         self.map_msg.data = self.np_map.flatten()
