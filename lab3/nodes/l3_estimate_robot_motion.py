@@ -128,6 +128,7 @@ class WheelOdom:
             self.wheel_odom_pub.publish(self.wheel_odom)
 
             self.bag.write('odom_est', self.wheel_odom)
+            self.bag.write('odom_onboard', self.odom)
 
             # for testing against actual odom
             # print("Wheel Odom: x: %2.3f, y: %2.3f, t: %2.3f" % (
@@ -141,7 +142,6 @@ class WheelOdom:
     def odom_cb(self, odom_msg):
         # get odom from turtlebot3 packages
         self.odom = odom_msg
-        self.bag.write('odom_onboard', self.odom)
 
     def plot(self, bag):
         data = {"odom_est":{"time":[], "data":[]}, 
