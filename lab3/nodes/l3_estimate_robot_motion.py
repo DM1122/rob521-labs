@@ -109,7 +109,7 @@ class WheelOdom:
             # Update pose
             self.pose.position.x += dx
             self.pose.position.y += dy
-            self.pose.orientation = ros_quat_from_euler(0, 0, theta)
+            self.pose.orientation = ros_quat_from_euler((0, 0, theta))
 
             # Update twist (velocity)
             self.twist.linear.x = d_center / dt
@@ -134,10 +134,13 @@ class WheelOdom:
             # print("Wheel Odom: x: %2.3f, y: %2.3f, t: %2.3f" % (
             #     self.pose.position.x, self.pose.position.y, mu[2].item()
             # ))
-            # print("Turtlebot3 Odom: x: %2.3f, y: %2.3f, t: %2.3f" % (
-            #     self.odom.pose.pose.position.x, self.odom.pose.pose.position.y,
-            #     euler_from_ros_quat(self.odom.pose.pose.orientation)[2]
-            # ))
+            print("Wheel Odom: x: %2.3f, y: %2.3f, t: %2.3f" % (
+                self.pose.position.x, self.pose.position.y, theta
+            ))
+            print("Turtlebot3 Odom: x: %2.3f, y: %2.3f, t: %2.3f" % (
+                self.odom.pose.pose.position.x, self.odom.pose.pose.position.y,
+                euler_from_ros_quat(self.odom.pose.pose.orientation)[2]
+            ))
 
     def odom_cb(self, odom_msg):
         # get odom from turtlebot3 packages
