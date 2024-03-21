@@ -35,8 +35,9 @@ The code updates the occupancy grid's log likelihood based on each lidar measure
 
 A potential error in the algorithm could arise from the robot's dead reckoning. Dead reckoning accumulates errors over time without other measurements for reference, leading to an imprecise estimate of the robot's location and causing the map to shift ("drift") over time. The error is not prominent when the robot's odometry estimate is well-aligned with its simulated counterpart.
 ### Mapping in a Simulated Environment
+![Mapping in a Simulated Environment](./results/task3.png)
 
 ### Mapping on a Real Robot
-![Mapping on a Real Robot](./results/task6.png)\n
+![Mapping on a Real Robot](./results/task6.png)
 
 A potential error that did not present in simulation is that a real robot is subjected to external disturbances such as uneven ground surface, bumps, and wheel slippages that will not be accounted for by our odometry estimates. These can cause slight deviations between the robot's position and the odometry estimates, which, as mentioned in the previous section, can accumulate over time, leading to larger deviations as time progresses.
