@@ -37,3 +37,6 @@ A potential error in the algorithm could arise from the robot's dead reckoning. 
 ### Mapping in a Simulated Environment
 
 ### Mapping on a Real Robot
+| ![Mapping on a Real Robot](./results/task6.png)|
+
+A potential error that did not present in simulation is that a real robot is subjected to external disturbances such as uneven ground surface, bumps, and wheel slippages that will not be accounted for by our odometry estimates. These can cause slight deviations between the robot's position and the odometry estimates, which, as mentioned in the previous section, can accumulate over time, leading to larger deviations as time progresses.
