@@ -28,6 +28,29 @@ A value of 0.285 was obtained for the wheel separation distance. The datasheet p
 
 ## Task 5 (Daye)
 
+### Motion Estimation 
+
+1. Two plots from the two experiments comparing our odom estimates with the onboard one. 
+
+- 1-1. First experiment: driving in a circle with radius approximately 1m and returning to the same starting point 
+
+![ex1](./results/task5_ex1.jpeg)
+
+- 1-2. Repeat for a more complex path 
+
+![ex2](./results/task5_ex2.jpeg)
+
+2. Briefly discuss the results (1 pt)
+   
+ - 2-1. How is your estimation compared to the onboard one? Name one
+possible source of error that accounts for the differences.
+
+     - The lines are not perfectly overlaid, indicating potential errors or noise in the measurement or estimation process. One possible source of error could be inaccuracies in the robot's sensors or the method used to calculate the estimated odometry. This might include wheel slippage, sensor drift, or delays in data processing.
+
+ - 2-2.  How are the estimates compared to the actual trajectory you observed? Name one possible source of error that accounts for the differences.
+
+     - The estimated odometry seems to match the actual path taken by the robot as observed during the experiment. However, there are deviations, particularly visible in the complex path of the second experiment. A potential source of error affecting the match to the actual trajectory could be environmental factors, such as uneven terrain that might cause unexpected robot behavior.
+
 ## Task 6 (Davin)
 
 ### Occupancy Grid Mapping
