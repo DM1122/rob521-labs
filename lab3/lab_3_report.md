@@ -25,3 +25,15 @@ b = \frac{r}{2} \frac{\sum_k (\Delta \phi_r(kh) - \Delta \phi_\ell(kh))}{N \time
 $$
 
 A value of 0.285 was obtained for the wheel separation distance. The datasheet provides a factory value of 0.287. This is a percentage error of 0.70%. A source of uncertainty is introduced by way of the experimental procedure which relies of the visual acuity of the experimenters to determine when the robot has completed a full rotation exactly. This uncertainty causes the estimated wheel separation distance to be larger than actual when overshooting the full rotation, and smaller than actual when undershooting the full rotation. A laser measurement would help eliminate this uncertainty.
+
+## Task 5 (Daye)
+
+## Task 6 (Davin)
+
+### Occupancy Grid Mapping
+The code updates the occupancy grid's log likelihood based on each lidar measurement. It retrieves all lidar points at each measurement interval, iterates through them, and for each point, updates the map. It adds "alpha" to the log likelihood of a predetermined number of points at the measurement coordinates (representing the observed part of the obstacle) and subtracts "beta" from the cells between the obstacle and the robot. To prevent overflow errors, a saturation value is imposed on the log likelihoods. This process is repeated as the robot moves to build a map of the environment.
+
+A potential error in the algorithm could arise from the robot's dead reckoning. Dead reckoning accumulates errors over time without other measurements for reference, leading to an imprecise estimate of the robot's location and causing the map to shift ("drift") over time. The error is not prominent when the robot's odometry estimate is well-aligned with its simulated counterpart.
+### Mapping in a Simulated Environment
+
+### Mapping on a Real Robot
