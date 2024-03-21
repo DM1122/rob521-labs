@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "nodes"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.26.3"
+pyyaml = "^6.0.1"
+pygame = "^2.5.2"
+pygame-utils = "^0.3.0"
+matplotlib = "^3.8.2"
+scipy = "^1.12.0"
+scikit-image = "^0.22.0"
+pydantic = "^2.6.1"
+beartype = "^0.17.0"
+jaxtyping = "^0.2.25"
+astropy = "^6.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+ruff = "^0.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--verbose --color=yes --capture=no"
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
