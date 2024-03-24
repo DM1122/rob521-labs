@@ -12,3 +12,8 @@ As we lower the min-max AMCL particle counts, we see poorer localization perform
 
 The maximum odom_alpha parameters were increased until localization diverged. This occurred at values in the neighborhood of 6.0.
 ![odom-alpha](captures/odom-alpha.png)
+
+## Part 2: Mapping turtlebot3_world
+
+
+## Part 3: Mapping willowgarge_world
