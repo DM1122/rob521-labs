@@ -15,10 +15,13 @@ The maximum odom_alpha parameters were increased until localization diverged. Th
 
 ## Part 2: Mapping turtlebot3_world
 
+The following figure depicts our mapping result from Lab 3.
 ![Mapping with LIDAR Scan](captures/task3.png)
 
+The following figure depicts our mapping result with GMapping.
 ![Mapping with GMapping](captures/lab4_task2.png)
 
+**Comparison:** We found that the localization component of GMapping made the robot more robust against factors that could affect the resulting map. Previously in Lab 3, we found that external disturbances like bumps or wheel slippages could result in odometry errors that accumulate over time. These errors resulted in "shifted" or "distorted" maps. With GMapping however, we still experience distortions (when we hit an obstacle for example), but the algorithm is able to correct itself with lidar scan matching. This is also why it is important to have loop closures in our mapping path, as it helps to reduce cumulative error of the robot's estimated pose and generate a consistent global map.
 
 ## Part 3: Mapping willowgarge_world
 
