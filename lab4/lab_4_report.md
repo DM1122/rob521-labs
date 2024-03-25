@@ -15,6 +15,10 @@ The maximum odom_alpha parameters were increased until localization diverged. Th
 
 ## Part 2: Mapping turtlebot3_world
 
+![Mapping with LIDAR Scan](captures/task3.png)
+
+![Mapping with GMapping](captures/lab4_task2.png)
+
 
 ## Part 3: Mapping willowgarge_world
 
