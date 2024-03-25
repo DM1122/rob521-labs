@@ -17,3 +17,9 @@ The maximum odom_alpha parameters were increased until localization diverged. Th
 
 
 ## Part 3: Mapping willowgarge_world
+
+## Part 4: Mapping Myhal
+Below is a screenshot of the real Myhal mapped map.
+![Myhal Map](captures/myhal-map.jpg)
+
+During acquisition, it was noticed that the map would occasionally rotate out of place. We believe this to be due to occasional wheel slippage during turns, which introduces error into the GMapping algorithm
