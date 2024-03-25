@@ -22,4 +22,4 @@ The maximum odom_alpha parameters were increased until localization diverged. Th
 Below is a screenshot of the real Myhal mapped map.
 ![Myhal Map](captures/myhal-map.jpg)
 
-During acquisition, it was noticed that the map would occasionally rotate out of place. We believe this to be due to occasional wheel slippage during turns, which introduces errors into the GMapping algorithm, which it then corrects for
+During acquisition, it was noticed that the map would occasionally rotate out of place. We believe this to be due to occasional wheel slippage during turns, which introduces errors into the GMapping algorithm, which it then corrects for through lidar scan matching
