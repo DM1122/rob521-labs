@@ -21,7 +21,7 @@ The following figure depicts our mapping result from Lab 3.
 The following figure depicts our mapping result with GMapping.
 ![Mapping with GMapping](captures/lab4_task2.png)
 
-**Comparison:** We found that the localization component of GMapping made the robot more robust against factors that could affect the resulting map. Previously in Lab 3, we found that external disturbances like bumps or wheel slippages could result in odometry errors that accumulate over time. These errors resulted in "shifted" or "distorted" maps. With GMapping however, we still experience distortions (when we hit an obstacle for example), but the algorithm is able to correct itself with lidar scan matching. This is also why it is important to have loop closures in our mapping path, as it helps to reduce cumulative error of the robot's estimated pose and generate a consistent global map.
+**Comparison:** We found that the localization component of GMapping made the robot more robust against factors that could affect the resulting map. Previously in Lab 3, we found that external disturbances like bumps or wheel slippages could result in errors as the LIDAR scan only depends on odometry data. These errors resulted in "shifted" or "distorted" of the map that progressively gets worse the longer the robot moves. With GMapping however, we still experience distortions (when we hit an obstacle for example), but the algorithm is able to correct itself with lidar scan matching when it detects that it has returned to a previously visited point. This is also why it is important to have loop closures in our mapping path, as it helps to reduce cumulative error of the robot's estimated pose and generate a consistent global map.
 
 ## Part 3: Mapping willowgarge_world
 
