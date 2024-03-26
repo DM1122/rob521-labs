@@ -1,4 +1,6 @@
 # ROB521 Lab 4 Report
+David Maranto, Dayee Lee, Davin Chua
+PRA0101 - Group 1
 
 
 ## Part 1: turtlebot3_world localization
