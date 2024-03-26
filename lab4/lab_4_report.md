@@ -14,3 +14,21 @@ As we lower the min-max AMCL particle counts, we see poorer localization perform
 
 The maximum odom_alpha parameters were increased until localization diverged. This occurred at values in the neighborhood of 6.0.
 ![odom-alpha](captures/odom-alpha.png)
+
+## Part 2: Mapping turtlebot3_world
+
+The following figure depicts our mapping result from Lab 3.
+![Mapping with LIDAR Scan](captures/task3.png)
+
+The following figure depicts our mapping result with GMapping.
+![Mapping with GMapping](captures/lab4_task2.png)
+
+**Comparison:** We found that the localization component of GMapping made the robot more robust against factors that could affect the resulting map. Previously in Lab 3, we found that external disturbances like bumps or wheel slippages could result in errors as the LIDAR scan only depends on odometry data. These errors resulted in "shifted" or "distorted" of the map that progressively gets worse the longer the robot moves. With GMapping however, we still experience distortions (when we hit an obstacle for example), but the algorithm is able to correct itself with lidar scan matching when it detects that it has returned to a previously visited point. This is also why it is important to have loop closures in our mapping path, as it helps to reduce cumulative error of the robot's estimated pose and generate a consistent global map.
+
+## Part 3: Mapping willowgarge_world
+
+## Part 4: Mapping Myhal
+Below is a screenshot of the real Myhal mapped map.
+![Myhal Map](captures/myhal-map.jpg)
+
+During acquisition, it was noticed that the map would occasionally rotate out of place. We believe this to be due to occasional wheel slippage during turns, which introduces errors into the GMapping algorithm, which it then corrects for through lidar scan matching
