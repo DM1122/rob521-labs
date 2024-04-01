@@ -1,0 +1,3 @@
+- trajectory는 map안에서 보여져야해서, self.occupancy_map의 pixel로 계산한다. 
+    - 예를 들어, myhal은 m 단위로는 (0, 5.5)~(2.2, 7.7) 까지의 boundary를 가지지만, 
+    - self.occupancy_map은 pixel로 (49, 159)의 shape을 가지는 map으로 정의되어 있다. 

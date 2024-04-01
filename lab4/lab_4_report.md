@@ -27,6 +27,34 @@ The following figure depicts our mapping result with GMapping.
 
 ## Part 3: Mapping willowgarge_world
 
+```yaml
+maxUrange: 5.0
+srr: 0.05 
+srt: 0.1 
+str: 0.05
+stt: 0.1 
+particles: 150 
+```
+
+기존 Setting을 위와 같이 바꾸고 mapping을 하였으며 그 결과는 아래 그림과 같다. 
+|![willow](captures/willow_mapping.jpeg)|
+|---|
+| Left image: The actual map of willowgarage_world, Right image: Map created by partially mapping the path using Gmapping. The parts corresponding to the right map from the actual left map are indicated with red lines. |
+
+After changing the settings and performing gmapping, the result was a wrong map, indicating a failure in loop closure in SLAM.
+
+Comparing the gmapping result map with the actual map, in the section where there is a turn from the bottom left to the right, it failed to perfectly map the wall, instead splitting it into two paths. Additionally, the map's angle is slightly tilted to the right. While mapping, the map also rotated and drifted slightly. When I attempted to close a loop, there seemed to be no specific problem, but the map appeared to shake a bit.
+
+The adjustments I've made—increasing `particles` and `maxUrange` while decreasing `srr`, `srt`, `str`, and `stt`—aim to refine the mapping process by enhancing the algorithm's ability to capture more detail (with more particles and a longer usable range) and by assuming less noise in the robot's movement (with lower motion and turning noise parameters). 
+
+We believe that experiencing discrepancies in the map after a loop closure, even with these adjustments, can still occur due to a variety of reasons:
+
+1. **Increased Complexity with More Particles**: While increasing the number of particles can theoretically improve the map's accuracy by considering more potential robot paths, it also increases the complexity of the algorithm. This can lead to challenges in effectively managing all these particles, especially in environments where features are difficult to match precisely.
+
+2. **Sensitivity to Parameters**: Reducing the noise parameters (`srr`, `srt`, `str`, `stt`) makes the algorithm less tolerant of inaccuracies in motion and turning. If the actual noise is higher than what you've configured, this discrepancy can lead to errors in how the robot's movement is interpreted, affecting loop closure accuracy.
+
+
+
 ## Part 4: Mapping Myhal
 Below is a screenshot of the real Myhal mapped map.
 ![Myhal Map](captures/myhal-map.jpg)
